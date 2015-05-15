@@ -1,0 +1,10 @@
+*~
+*#
+.#*
+*.o
+*.log
+.*.swp
+tags
+/bin
+spy_server
+
