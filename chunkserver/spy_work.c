@@ -12,21 +12,6 @@
 #include "spy_work.h"
 
 #define SHRINK_PERIOD_PROTECTION 10
-/*
-static int spy_wq_need_shrink(spy_work_queue_t *wq)
-{
-	int n;
-	uint64_t current_time = spy_current_time_sec();
-
-	if (spy_atomic_read(&wq->nr_works) < spy_atomic_read(&wq->nr_threads) / 2 
-		&& current_time > wq->last_expand_time + SHRINK_PERIOD_PROTECTION) {
-
-		return 1;
-	}
-
-	return 0;
-}
-*/
 
 static int spy_wq_need_shrink(spy_work_queue_t *wq)
 {
@@ -46,16 +31,6 @@ static int spy_wq_need_shrink(spy_work_queue_t *wq)
 
 	return 0;
 }
-
-/*
-static int spy_wq_need_expand(spy_work_queue_t *wq)
-{
-	if (spy_atomic_read(&wq->nr_threads) < spy_atomic_read(&wq->nr_works) / 2) 		
-		return 1;
-	
-	return 0;
-}
-*/
 
 static int spy_wq_need_expand(spy_work_queue_t *wq)
 {

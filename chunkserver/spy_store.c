@@ -375,6 +375,7 @@ static void spy_fill_superblock(char *buf, spy_chunk_t *chunk)
 	spy_mach_write_to_8(p, checksum);
 }
 
+//TODO: need double write buffer here
 int spy_write_chunk_superblock(spy_chunk_t *chunk)
 {
 	ssize_t n;
@@ -587,11 +588,15 @@ void WORKER_FN spy_write_file(spy_work_t *wk)
 
 	io_job->retcode = 0;
 
-	//update chunk
-	//chunk->current_offset += io_job->file.size + FILE_META_SIZE;
-	//chunk->avail_space    -= io_job->file.size + FILE_META_SIZE;
-	//chunk->files_alloc++;
-	//chunk->files_count++;
+	chunk->current_offset += io_job->file.size + FILE_META_SIZE;
+	chunk->avail_space    -= io_job->file.size + FILE_META_SIZE;
+	chunk->files_alloc++;
+	chunk->files_count++;
+	
+	spy_write_chunk_superblock(chunk);
+	
+	if (config.sync)
+		spy_flush_and_sync_chunk(chunk);
 
 	return;
 

@@ -9,29 +9,6 @@
 #include "spy_log.h"
 #include "spy_server.h"
 
-/*
-void spy_log(int level, char *fmt, ...)
-{
-	int n;
-	va_list ap;
-	char msg[1024];
-
-	if (config.log_level > level) {
-		return;
-	}
-
-	va_start(ap,fmt);
-
-	n = vsnprintf(msg,1023,fmt,ap);
-	assert(n < 1023);
-
-	va_end(ap);
-
-	msg[n] = '\n';
-
-	write(server.log_fd, msg, n + 1);
-}
-*/
 void spy_log(int level, char *fmt, ...)
 {
 	int msg_len, time_len;

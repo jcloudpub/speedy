@@ -120,7 +120,7 @@ void *spy_report_routine(void *arg)
 		
 		if (fd < 0) {
 			spy_log(ERROR, "failed to report info to master");
-			printf("failed to connect master\n");
+			sleep(1);
 			continue;
 		}
 

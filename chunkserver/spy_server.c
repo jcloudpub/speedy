@@ -243,19 +243,6 @@ static void spy_write_file_done(spy_work_t *work)
 		goto ERROR_REPLY;
 	}
 
-	// update chunk and super block infos just when write success.
-	if (io_job->retcode == 0) {
-		chunk->current_offset += io_job->file.size + FILE_META_SIZE;
-		chunk->avail_space    -= io_job->file.size + FILE_META_SIZE;
-		chunk->files_alloc++;
-		chunk->files_count++;
-
-		spy_write_chunk_superblock(chunk);
-
-		if (config.sync)
-			spy_flush_and_sync_chunk(chunk);
-	}
-
 	// deal pending writes
 	// DEF_MAX_PENDING_WRITES is small, so foreach will run fast
 	if (server.pending_writes_size > 0) {
@@ -1294,8 +1281,6 @@ static void spy_usage()
 
 static void spy_open_log_file()
 {
-	truncate(config.log_path, 0);
-
 	server.log_fd = open(config.log_path, O_WRONLY | O_CREAT, 0644);
 
 	if (server.log_fd <= 0) {
