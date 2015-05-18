@@ -334,8 +334,8 @@ class Storage(driver.Base):
             self.tmpdir = "/tmp/"
         logger.debug("tmpdir : %s" % self.tmpdir)
 
-		# config speedy
-        speedy_pyclient.init_speedy(config.speedy_urls)
+        # config speedy
+        speedy_pyclient.init_speedy(config.storage_urls)
         self.speedy_conn = speedy_pyclient.Connection()
 
         # config speedy fragment size
@@ -374,7 +374,7 @@ class Storage(driver.Base):
     def put_content(self, path, content):
         logger.debug("put content path: %s" % path)
 
-		bytes_range = (0, len(content))
+        bytes_range = (0, len(content))
         resp = self.speedy_conn.upload(path, content, 0, bytes_range, is_last=True)
         if resp.status_code != 200:
             raise exceptions.UnspecifiedError("put speedy content failed: %s, status_code: %d"
@@ -388,7 +388,7 @@ class Storage(driver.Base):
     def remove(self, path):
         logger.debug("remove path: %s" % path)
 
-		resp = self.speedy_conn.delete(path)
+        resp = self.speedy_conn.delete(path)
         if resp.status_code == 204:
             logger.debug("speedy remove success: %s" % path)
         elif resp.status_code == 404:
@@ -406,8 +406,8 @@ class Storage(driver.Base):
 
     def list_directory(self, path=None):
         logger.debug("list directory path: %s" % path)
-		
-		resp = self.speedy_conn.list_directory(path)
+        
+        resp = self.speedy_conn.list_directory(path)
         if resp.status_code == 200:
             j = resp.json()
             return j["file-list"]
@@ -416,7 +416,7 @@ class Storage(driver.Base):
         else:
             raise exceptions.UnspecifiedError("unexcept status code: %d" % path)
 
-	def stream_read(self, path):
+    def stream_read(self, path):
         mc = _SpeedyMultiPartDownloadContext(path, self.speedy_conn, self.tmpdir)
         while True:
             buf = mc.read(self.buffer_size)
