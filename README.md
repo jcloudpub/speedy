@@ -1,43 +1,42 @@
 Introduction
 ============
 
-Speedy is a backend storage of docker-registry (Docker Registry API v1).
+speedy is a distributed storage system designed to provide high availability, high performance, strong consistency and scalability special for docker registry(Docker Registry API v1).
 
 Speedy consist of 8 main parts: docker-registry-speedy-driver, ImageServer, 
 ChunkMaster, ChunkServer, ChunkServer Agent, MetaServer, Monitor and Transfer.
 
+Speedy has 6 key parts:
+
 + docker-registry-speedy-driver
-Adapter of docker-registry and Speedy.
+This is a docker-registry backend driver for speedy, 
+docker-registry-speedy-driver divides docker image layer into fixed-size chunk, each chunk is identified by an immutable global unique groupid and an immutable global unique file id.
+driver will retry for the chunk instead of the image layer while reading or writing failed
 
-+ ImageServer
-Provide file upload and download service. ImageServer is stateless server, 
-you can start multiple ImageServer instance at the same time, each one is 
-equal. ImageServer will get all ChunkServers' informations from ChunkMaster 
-periodically.
++ imageserver
+This is a stateless server designed to provide restful api to upload and download docker image. 
+imageserver get chunkserver information and file id from chunkmaster periodically. 
+imageserver choose a suitable chunkserver group to storage docker image according to chunkserver information independently, 
+we can start many imageserver to provice service at the same time and docker-registry-speedy-driver can use anyone of them equally.
 
-+ ChunkMaster
-The central control node. Hold all ChunkServers informations. Internal file
-ID allocator.
 
-+ ChunkServer
-Where the data actually store. Normally, 3 ChunkServers make a group, each 
-ChunkServer in the same group is equal. Speedy is a strong consistency system, 
-write will route to all ChunkServers of a group at the same time, write success
-mean that all the ChunkServers write success, otherwise write failed.
++ chunkmaster
+This is a master of speedy designed to maintain chunkserver information and allocate the file id. 
+chunkmaster store chunkserver information to mysql and keep in memory as cache, while imageserver try to get chunkserver information chunkmaster send the information in memory to imageserver.
+while imageserver try to get file id, chunkmaster allocate a continuous range of file id and send to imageserver.
 
-+ ChunkServer Agent
-Agent report status of ChunkServer to ChunkMaster, like disk free space, IO status etc.
++ chunkserver
+chunkserver stores chunks on local disk as linux files and read or write chunk data specified by groupid and fileid which send from imageserver, 
+chunkserver also maintains the map of groupid and fileid to the offset of chunk.
+normally, a chunkserver group is consist of 3 chunkservers,
+imageserver writes data to a chunkserver group suceess means storing data to each chunkserver of the group success. 
 
-+ MetaServer
-Manage file meta datas, include file meta information and file directory structure.
++ metaserver
+metaserver is designed to mantain map information of each chunk and docker image layer and keep the relationship of docker image and different tags.
 
-+ Monitor
-Monitoring the health of all ChunkServers and report it to ChunkMaster.
-
-+ Transfer
-Transfer data from ChunkServer to ChunkServer. When a ChunkServer of a group failed(system 
-crash, disk damaged and so on), we should add a new empty ChunkServer to this group, and 
-then transfer data from a health ChunkServer of this group to it.
++ transfer
+transfer is designed to cope data from a chunkserver to another chunkserver.
+when a chunkserver of a group failed(system crash, disk damaged and so on), we should add a new empty chunkserver to this group and transfer the data from a health chunkserver to this new chunkserver.
 
 
 Quick Install
@@ -47,33 +46,30 @@ Quick Install
 cd docker-registry-speedy-driver   
 python setup.py install   
 
-+ ImageServer/ChunkMaster/MonitoMaster/MonitorWorker/ChunkAgent/ChunkTool      
++ imageserver/chunkmaster/chunktool      
 cd src/github.com/speedycn    
 ./bootstrap.sh   
 . ./dev.env   
 make   
 
-+ ChunkServer   
++ chunkserver   
 cd chunkserver   
 make   
 
-+ MetaServer   
-You can use mysql instead.   
++ metaserver   
+we can use mysql instead.   
 
 
-+ Transfer   
++ transfer   
 
 
 Startup sequence
 ================
-1.ChunkMaster   
-2.ChunkServer   
-3.ChunkServer-Agent   
-4.MetaServer   
-5.ImageServer   
-6.MonitorWorker   
-7.MonitorMaster   
-8.docker-registry   
+1.chunkmaster   
+2.chunkserver   
+3.metaserver   
+4.imageserver   
+5.docker-registry   
 
 After that you can push and pull docker images.
 
