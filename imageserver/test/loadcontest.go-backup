@@ -1,0 +1,299 @@
+package main
+
+import (
+	"flag"
+	"os"
+	"fmt"
+	"time"
+	"github.com/jcloudpub/speedy/imageserver/util"
+	"sync"
+	"bytes"
+	"strconv"
+	"github.com/jcloudpub/speedy/chunkmaster/util/log"
+	"math/rand"
+)
+
+const (
+	IMAGE_SERVER	= "http://127.0.0.1:6788"
+	PATH_PREX_DIR	= "loadtest/abc/tag_"
+	PATH_PREX		= "loadtest/abc/key_"
+	PartSize = 4194304
+)
+
+func postFile(serverAddr, path string, fileBody []byte, index, bytesRange, isLast string) error {
+	header := make(map[string][]string)
+	header["Path"] = []string{path}
+	header["Fragment-Index"] = []string{index}
+	header["Bytes-Range"] = []string{bytesRange}
+	header["Is-Last"] = []string{isLast}
+
+	_, statusCode, err := util.Call("POST", serverAddr, "/v1/file", bytes.NewBuffer(fileBody), header)
+	if err != nil || statusCode != 200 {
+		return fmt.Errorf("[postFile] path:%s, error:%v, statusCode:%v", path, err, statusCode)
+	}
+	log.Infof("[postFile] index:%v path:%s, ok", index, path)
+	return nil
+}
+
+func getFile(serverAddr, path, index, bytesRange string) (int64, error) {
+
+	header := make(map[string][]string)
+	header["Path"] = []string{path}
+	header["Fragment-Index"] = []string{index}
+	header["Bytes-Range"] = []string{bytesRange}
+
+	result, statusCode, err := util.Call("GET", serverAddr, "/v1/file", nil, header)
+	if err != nil || statusCode != 200 {
+		return int64(0), fmt.Errorf("[getFile] path:%s, error:%v, statusCode:%v", path, err, statusCode)
+	}
+	log.Infof("[getFile] index:%v path:%s, ok", index, path)
+	log.Infof("[getFile] result len:%v", len(result))
+	return int64(len(result)), nil
+}
+
+func getFileInfo(serverAddr, path string) (error) {
+	header := make(map[string][]string)
+	header["Path"] = []string{path}
+
+	_, statusCode, err := util.Call("GET", serverAddr, "/v1/fileinfo", nil, header)
+	if err != nil {
+		return fmt.Errorf("[getFileInfo] path:%s, error:%v, statusCode:%v", path, err, statusCode)
+	}
+	return nil
+}
+
+func getDir(serverAddr, path string) (error) {
+	header := make(map[string][]string)
+	header["Path"] = []string{path}
+
+	_, statusCode, err := util.Call("GET", serverAddr, "/v1/list_directory", nil, header)
+	if err != nil || statusCode != 200 {
+		return fmt.Errorf("[getDir] path:%s, error:%v, statusCode:%v", path, err, statusCode)
+	}
+	return nil
+}
+
+func rmFile(serverAddr, path string) error{
+	header := make(map[string][]string)
+	header["Path"] = []string{path}
+
+	_, statusCode, err := util.Call("DELETE", serverAddr, "/v1/file", nil, header)
+	if err != nil || statusCode != 204 {
+		return fmt.Errorf("[rmFile] path:%s, error:%v, statusCode:%v", path, err, statusCode)
+	}
+	return nil
+}
+
+func continuousTest(serverAddr, fileName string, routineCount int, sleep int) {
+	log.Infof("[continuousTesting] serverAddr:%s, fileName:%s, routineCount:%v", serverAddr, fileName, routineCount)
+
+	f, err := os.Open(fileName)
+	if err != nil {
+		log.Errorf("[continuousTesting] open file err:%v", err)
+		return
+	}
+	defer f.Close()
+
+	info, err := f.Stat()
+	if err != nil {
+		log.Errorf("[continuousTesting] get file stat err:%v", err)
+		return
+	}
+
+	fSize := info.Size()
+	log.Infof("file size : %v", fSize)
+	fbody := make([]byte, fSize)
+	nread, err := f.Read(fbody)
+	if err != nil || int64(nread) != fSize {
+		log.Errorf("[continuousTesting] read file data err:%v, nread:%v, fSize:%v", err)
+		return
+	}
+
+	partCount := int(fSize / PartSize)
+	isMod := false
+	if int(fSize % PartSize) == 0 {
+		isMod = true
+	} else {
+		isMod = false
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(routineCount)
+
+	result := make([]int, routineCount)
+	log.Infof("[continuousTesting] start ..")
+
+	start := time.Now()
+	for i := 0; i < routineCount; i++ {
+
+		go func(idx int) {
+			count := 0
+
+			defer func() {
+				//rmFile(serverAddr, path)
+				wg.Done()
+				result[idx] = count
+
+			}()
+
+			var err error
+			for {
+				if partCount == 0 {
+					path := PATH_PREX_DIR + strconv.Itoa(idx)
+					//upload
+					err = postFile(serverAddr, path, fbody, "0", fmt.Sprintf("0-%v", fSize), "true")
+					if err != nil {
+						log.Errorf("g[%v], %v", idx, err)
+						return
+					}
+					//getFileInfo
+					err = getFileInfo(serverAddr, path)
+					if err != nil {
+						log.Errorf("g[%v], %v", idx, err)
+						return
+					}
+					//download File
+					nSize, err := getFile(serverAddr, path, "0", fmt.Sprintf("0-%v", fSize))
+					if err != nil || nSize != fSize {
+						log.Errorf("%v", err)
+						log.Errorf("g[%v] getFile nSize:%v, fSize:%v", idx, nSize, fSize)
+						return
+					}
+					//get Dir
+					err = getDir(serverAddr, "loadtest/abc")
+					if err != nil {
+						log.Errorf("g[%v], %v", idx, err)
+						return
+					}
+					//rm File
+					err = rmFile(serverAddr, path)
+					if err != nil {
+						log.Errorf("g[%v], %v", idx, err)
+						return
+					}
+					count ++
+				} else {
+
+					path := PATH_PREX_DIR + strconv.Itoa(idx)
+					//upload
+					begin := 0
+					end := 0
+					k := 0
+					for k = 0; k < partCount; k++ {
+						begin = k*PartSize
+						end = (k+1)*PartSize
+						log.Infof("post:%v", fmt.Sprintf("%v-%v", begin, end))
+						if k == partCount-1 && isMod == true {
+							err = postFile(serverAddr, path, fbody[begin:end], fmt.Sprintf("%v", k), fmt.Sprintf("%v-%v", begin, end), "true")
+						} else {
+							err = postFile(serverAddr, path, fbody[begin:end], fmt.Sprintf("%v", k), fmt.Sprintf("%v-%v", begin, end), "false")
+						}
+						if err != nil {
+							log.Errorf("g[%v], %v", idx, err)
+							return
+						}
+					}
+					if isMod == false {
+						begin = end
+						end = int(fSize)
+						log.Infof("post:%v", fmt.Sprintf("%v-%v", begin, end))
+						err = postFile(serverAddr, path, fbody, fmt.Sprintf("%v", k), fmt.Sprintf("%v-%v", begin, end), "true")
+						if err != nil {
+							log.Errorf("g[%v], %v", idx, err)
+							return
+						}
+					}
+
+					//getFileInfo
+					err = getFileInfo(serverAddr, path)
+					if err != nil {
+						log.Errorf("g[%v], %v", idx, err)
+						return
+					}
+					//download File
+					tSize := int64(0)
+					for k = 0; k < partCount; k++ {
+						begin = k*PartSize
+						end = (k+1)*PartSize
+						log.Infof("get:%v", fmt.Sprintf("%v-%v", begin, end))
+						s, err := getFile(serverAddr, path, fmt.Sprintf("%v", k), fmt.Sprintf("%v-%v", begin, end))
+						tSize += s
+						if err != nil {
+							log.Errorf("g[%v], %v", idx, err)
+							return
+						}
+					}
+					if isMod == false {
+						begin = end
+						end = int(fSize)
+						log.Infof("get:%v", fmt.Sprintf("%v-%v", begin, end))
+						s, err := getFile(serverAddr, path, fmt.Sprintf("%v", k), fmt.Sprintf("%v-%v", begin, end))
+						tSize += s
+						if err != nil {
+							log.Errorf("g[%v], %v", idx, err)
+							return
+						}
+					}
+
+					if tSize != fSize {
+						log.Errorf("g[%v] getFile tSize:%v, fSize:%v", idx, tSize, fSize)
+						return
+					}
+
+					//get Dir
+					err = getDir(serverAddr, "loadtest/abc")
+					if err != nil {
+						log.Errorf("g[%v], %v", idx, err)
+						return
+					}
+					//rm File
+					err = rmFile(serverAddr, path)
+					if err != nil {
+						log.Errorf("g[%v], %v", idx, err)
+						return
+					}
+					count ++
+				}
+				tSleep := (rand.Intn(sleep)+ 1)
+				log.Infof("g[%v], sleep :%v", idx, tSleep)
+				time.Sleep(time.Duration(tSleep) * time.Second)
+			}
+
+		}(i)
+	}
+
+	wg.Wait()
+	end := time.Now()
+	duration := end.Sub(start)
+
+	totalSize := 0
+	for i := 0; i < routineCount; i++ {
+		log.Infof("goroutine [%v], excuteCount : %v", i,  result[i])
+		totalSize += result[i]
+	}
+
+	log.Infof("all goroutine excuteCount : %v", totalSize)
+	log.Infof("[continuousTesting] finish ..")
+	log.Infof("[continuousTesting] duration:%v", duration)
+}
+
+func main() {
+	var cmd = flag.String("c", "nocommand", "command")
+	var hostAddr = flag.String("h", "imageserver", "http://127.0.0.1:6788")
+	var FileName = flag.String("f", "filename", "/tmp/testfile")
+	var routineCount = flag.Int("r", 0, "routine count")
+	var sleep = flag.Int("s", 0, "sleep")
+	//var perRountine = flag.Int("w", 0, "per routine works")
+
+	flag.Parse()
+
+	fmt.Printf("begin\n")
+	fmt.Println("cmd:", *cmd)
+
+	if  *cmd == "continuous" {
+		log.Infof("continuous Test")
+		continuousTest(*hostAddr, *FileName, *routineCount, *sleep)
+	} else {
+		fmt.Printf("do nothing\n")
+	}
+}
