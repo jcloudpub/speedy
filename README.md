@@ -27,24 +27,24 @@ Architecture
 
 Component
 ============
-* docker-registry-speedy-driver 
+* docker-registry-speedy-driver       
 Docker-registry backend storage driver for speedy, It divides docker image layer into fixed-size chunk concurrently upload/download to chunkserver.
 
-* imageserver 
+* imageserver            
 It is a stateless frond-end proxy server designed to provide restful api to upload and download docker image. 
 imageserver get chunkserver information and file id from chunkmaster periodically. 
 imageserver choose a suitable chunkserver group to storage docker image according to chunkserver information independently, 
 we can start many imageserver to provice service at the same time and docker-registry-speedy-driver can use anyone of them equally.
 
-* chunkmaster 
+* chunkmaster              
 It is a central master node designed to maintain chunkserver information and allocate the file id. 
 chunkmaster store chunkserver information to mysql and keep in memory as cache, while imageserver try to get chunkserver information chunkmaster send the information in memory to imageserver.
 while imageserver try to get file id, chunkmaster allocate a continuous range of file id and send to imageserver.
 
-* chunkserver 
+* chunkserver             
 It is a highly optimized storage engine for performance and space efficiency.It appends single small image file into large files and maintain file index in memory keeping the IO overhead to a minimum. Normally, a chunkserver group is consist of 3 chunkservers, imageserver writes data to a chunkserver group suceess means storing data to each chunkserver of the group success. 
 
-* metaserver 
+* metaserver        
 It is an another distributed key-value storage used by [jcloud.com](http://jcloud.com), since It's not open-source yet, you can use mysql instead which store the image layer metadata informations.
 
 Quick Install
