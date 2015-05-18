@@ -12,7 +12,7 @@ Features
 * Large file will be divided into small chunks and upload/download those chunks concurrently.
 * Onboard storage monitoring system.
 * Onboard rich operation tools.
-* Docker registry 1.0 API are supported
+* Docker registry 1.0 API are supported.
 
 Upcoming Features
 ============
@@ -68,7 +68,7 @@ Startup sequence
 ================
 1.chunkmaster   
 2.chunkserver   
-3.metaserver(mysql)
+3.metaserver(mysql)       
 4.imageserver   
 5.docker-registry   
 
