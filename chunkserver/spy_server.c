@@ -1273,7 +1273,9 @@ static void spy_usage()
 			"-l <memory limit (MB)>\n"
 			"-n <number of chunks>\n"
 			"-f <force sync write>\n"
-			"-d\n"
+			"-d -running as daemon\n"
+		    "-m chunkmaster ip addr\n"
+		    "-r chunkmaster port\n"
 		);
 
 	exit(1);
@@ -1291,6 +1293,8 @@ static void spy_open_log_file()
 
 static void spy_server_init() 
 {
+	memset(&config, 0x0, sizeof(spy_config_t));
+
 	config.port       = DEF_SERVER_PORT;
 	config.daemonize  = DEF_DAEMONIZE;
 	config.data_dir   = DEF_DATA_DIR;
