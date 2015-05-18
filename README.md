@@ -1,10 +1,7 @@
 Introduction
 ============
 
-speedy is a distributed storage system designed to provide high availability, high performance, strong consistency and scalability special for docker registry(Docker Registry API v1).
-
-Speedy consist of 8 main parts: docker-registry-speedy-driver, ImageServer, 
-ChunkMaster, ChunkServer, ChunkServer Agent, MetaServer, Monitor and Transfer.
+Speedy is a distributed storage system designed to provide high availability, high performance, strong consistency and scalability special for docker registry(Docker Registry API v1).
 
 Speedy has 6 key parts:
 
