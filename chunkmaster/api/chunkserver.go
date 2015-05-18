@@ -90,7 +90,7 @@ func reportChunkserverInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 	defer req.Body.Close()
 
-	log.Infof("[reportChunkserverInfoHandler] reqData: %v", string(reqData))
+	log.Debugf("[reportChunkserverInfoHandler] reqData: %v", string(reqData))
 	jsonMap, err := util.DecodeJson(reqData)
 	if err != nil {
 		util.HandleError(resp, "", err, http.StatusBadRequest)
@@ -104,8 +104,8 @@ func reportChunkserverInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	key := fmt.Sprintf("%s:%d", chunkserver.Ip, chunkserver.Port)
-	log.Infof("key: %v", key)
-	log.Infof("serverInfo: %v", serverInfo)
+	log.Debugf("key: %v", key)
+	log.Debugf("serverInfo: %v", serverInfo)
 
 	lock.RLock()
 	oldChunkserver, ok := serverInfo[key]
@@ -167,10 +167,12 @@ func reportChunkserverInfo(key string, chunkserver *metadata.Chunkserver, oldChu
 
 
 func initChunkserverHandler(resp http.ResponseWriter, req *http.Request) {
+	/*
 	if err := util.ContentTypeCheck(req); err != nil {
 		util.HandleError(resp, "", err, http.StatusBadRequest)
 		return;
 	}
+	*/
 
 	reqData, err := ioutil.ReadAll(req.Body)
 	defer req.Body.Close()
