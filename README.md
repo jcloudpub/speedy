@@ -50,22 +50,19 @@ It is an another distributed key-value storage used by [jcloud.com](http://jclou
 Quick Install
 =============
 
-+ docker-registry-speedy-driver   
+* docker-registry-speedy-driver   
 cd docker-registry-speedy-driver   
 python setup.py install   
 
-+ imageserver/chunkmaster/chunktool      
+* imageserver/chunkmaster/chunktool      
 cd src/github.com/speedycn    
 ./bootstrap.sh   
 . ./dev.env   
 make   
 
-+ chunkserver   
+* chunkserver   
 cd chunkserver   
 make   
-
-+ metaserver   
-we can use mysql instead.   
 
 Startup sequence
 ================
