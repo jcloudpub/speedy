@@ -416,7 +416,7 @@ class Storage(driver.Base):
         else:
             raise exceptions.UnspecifiedError("unexcept status code: %d" % path)
 
-    def stream_read(self, path):
+    def stream_read(self, path, bytes_range=None):
         mc = _SpeedyMultiPartDownloadContext(path, self.speedy_conn, self.tmpdir)
         while True:
             buf = mc.read(self.buffer_size)
