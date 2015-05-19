@@ -77,7 +77,7 @@ speedy: &speedy
     storage_urls: _env:SPEEDY_STORAGE:http://xxx.xxx.xxx.xxx:xxx;http://xxx.xxx.xxx.xxx:xxx
     fragment_size: _env:SPEEDY_FRAGMENT_SIZE:16M
     heart_beat_interval: _env:SPPEDY_HEARTBEAT_INTERVAL:5
-    tmpdir: _evn:SPEEDY_TMPDIR:/tmp/
+    tmpdir: _env:SPEEDY_TMPDIR:/tmp/
 
 local: &local
     <<: *common
