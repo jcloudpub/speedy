@@ -4,6 +4,7 @@
 *.o
 *.log
 .*.swp
+*.pyc
 tags
 /bin
 spy_server
