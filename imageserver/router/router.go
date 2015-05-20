@@ -907,11 +907,8 @@ func (s *Server) Run() error {
 
 	mysqldriver.InitMeta(s.metaHost)
 	s.metaDriver = new(mysqldriver.MysqlDriver)
-	//s.metaDriver = new(redisdriver.RedisDriver)
 
-	log.Infof("getChunkServerInfo")
 	http.Handle("/", s.router)
-
 	log.Infof("listen: %v", s.Port)
-	return http.ListenAndServe(":"+strconv.Itoa(s.Port), nil)
+	return http.ListenAndServe(s.Ip + ":" + strconv.Itoa(s.Port), nil)
 }
