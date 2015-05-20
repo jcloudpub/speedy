@@ -62,24 +62,24 @@ func chunkserverMonitor(timeoutSecond int) {
 		if err != nil {
 			log.Errorf("[ChunkServerMonitor] update chunkserver failed: %v, %v", chunkserver, err)
 		} else {
-			updateServerInfo(key, RO_STATUS)
+			updateChunkserverInfo(key, RO_STATUS)
 		}
 	}
 }
 
 
-func updateServerInfo(key string, status int) {
+func updateChunkserverInfo(key string, status int) {
 	lock.Lock()
 	chunkserver, ok := serverInfo[key]
 	if !ok {
-		log.Errorf("[updateServerInfo] key: %v do not exist", key)
+		log.Errorf("[updateServerInfo] chunkserver: %v do not exist", key)
 		lock.Unlock()
 		return
 	}
 
 	chunkserver.Status = status
 	lock.Unlock()
-	log.Errorf("[updateServerInfo] update RW_STATUS to RO_STATUS key: %v", key)
+	log.Errorf("[updateServerInfo] update RW_STATUS to RO_STATUS chunkserver: %v", key)
 }
 
 func reportChunkserverInfoHandler(resp http.ResponseWriter, req *http.Request) {
@@ -148,6 +148,7 @@ func reportChunkserverInfo(key string, chunkserver *metadata.Chunkserver, oldChu
 		if err != nil {
 			return err
 		}
+		log.Infof("[reportChunkserverInfo] update RO_STATUS to RW_STATUS chunkserver: %v", key)
 		chunkserver.Status = RW_STATUS
 	}
 
