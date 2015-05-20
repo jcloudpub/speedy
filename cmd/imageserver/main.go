@@ -36,6 +36,10 @@ func main() {
 	server := router.NewServer(masterUrl, *host, *port, *limitNum, *metaHost)
 	log.Infof("start")
 
-	server.Run()
+	err := server.Run()
+	if err != nil {
+		log.Errorf("start error: %v", err)
+		return
+	}
 	log.Infof("start success")
 }
