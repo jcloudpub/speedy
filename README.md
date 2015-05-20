@@ -1,7 +1,7 @@
 Introduction
 ============
 
-Speedy is a high performance distributed docker image storage solution written by go/c. It can easily scale out by adding more storage instance and no data have to move around between storage instance.It is also production ready and used by [jcloud.com](http://jcloud.com).
+Speedy is a high performance distributed docker image storage solution written by go/c. It can be easily scaled out by adding more storage instance and no data have to move around between storage instance.It is also production ready and used by [jcloud.com](http://jcloud.com).
 
 Features
 ============
@@ -28,7 +28,7 @@ Architecture
 Component
 ============
 * docker-registry-speedy-driver       
-Docker-registry backend storage driver for speedy, It divides docker image layer into fixed-size chunk concurrently upload/download to chunkserver.
+Docker-registry backend storage driver for speedy, It divides docker image layer into fixed-size chunk and uploads/downloads concurrently .
 
 * imageserver            
 It is a stateless frond-end proxy server designed to provide restful api to upload and download docker image. 
