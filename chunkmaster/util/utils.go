@@ -17,7 +17,6 @@ import (
 
 func EncodeJson(data interface {}) ([]byte, error) {
 	body, err := json.Marshal(data)
-
 	if err != nil {
 		return nil, err
 	}
@@ -27,16 +26,15 @@ func EncodeJson(data interface {}) ([]byte, error) {
 
 func DecodeJson(data []byte) (map[string]interface {}, error) {
 	var m map[string]interface {}
-
 	err := json.Unmarshal(data, &m)
-
 	if err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
- func Call(method, baseUrl, path string, body io.Reader, headers map[string][]string)([]byte, int, error) {
+
+func Call(method, baseUrl, path string, body io.Reader, headers map[string][]string)([]byte, int, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest(method, baseUrl + path, body)
 	if err != nil {

@@ -10,16 +10,16 @@ type Chunkserver struct {
 	GroupId				uint16
 	Ip					string
 	Port				int
-	Status				int
-	GlobalStatus    	int
-	TotalFreeSpace		int64
-	MaxFreeSpace		int64
-	PendingWrites		int
-	WritingCount   		int
-	ReadingCount 		uint32
-	TotalChunks 		uint32
-	ConnectionsCount 	uint32
-	DataDir				string
+	Status				int `json:",omitempty"`
+	GlobalStatus    	int `json:",omitempty"`
+	TotalFreeSpace		int64 `json:",omitempty"`
+	MaxFreeSpace		int64 `json:",omitempty"`
+	PendingWrites		int `json:",omitempty"`
+	WritingCount   		int `json:",omitempty"`
+	ReadingCount 		uint32 `json:",omitempty"`
+	TotalChunks 		uint32 `json:",omitempty"`
+	ConnectionsCount 	uint32 `json:",omitempty"`
+	DataDir				string `json:",omitempty"`
 	UpdateTime			time.Time `json:"-"`
 }
 

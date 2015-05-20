@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"time"
+	"encoding/json"
 
 	"github.com/jcloudpub/speedy/chunkmaster/util"
 	"github.com/jcloudpub/speedy/chunkmaster/util/log"
@@ -174,7 +175,6 @@ func initChunkserverHandler(resp http.ResponseWriter, req *http.Request) {
 		return;
 	}
 	*/
-
 	reqData, err := ioutil.ReadAll(req.Body)
 	defer req.Body.Close()
 	if err != nil {
@@ -208,6 +208,32 @@ func initChunkserverHandler(resp http.ResponseWriter, req *http.Request) {
 	chunkserver.ConnectionsCount = 0
 
 	err = addChunkserver(chunkserver)
+	if err != nil {
+		util.HandleError(resp, "", err, http.StatusInternalServerError)
+		return
+	}
+
+	util.Response(nil, http.StatusOK, resp)
+}
+
+func batchInitChunkserverHandler(resp http.ResponseWriter, req *http.Request) {
+	reqData, err := ioutil.ReadAll(req.Body)
+	defer req.Body.Close()
+	if err != nil {
+		util.HandleError(resp, "", err, http.StatusBadRequest)
+		return
+	}
+	log.Infof("[batchInitserverHandler] read reqData %v", string(reqData))
+
+	var chunkserverList []metadata.Chunkserver
+	err = json.Unmarshal(reqData, &chunkserverList)
+	if err != nil {
+		util.HandleError(resp, "", err, http.StatusBadRequest)
+		return
+	}
+	log.Infof("[batchInitserverHandler] change json to arr %v", chunkserverList)
+
+	err = batchAddChunkserver(&chunkserverList)
 	if err != nil {
 		util.HandleError(resp, "", err, http.StatusInternalServerError)
 		return
@@ -255,6 +281,16 @@ func LoadChunkserverInfo() error {
 
 
 func addChunkserver(chunkserver *metadata.Chunkserver) error {
+	chunkserver.Status = INIT_STATUS
+	chunkserver.TotalFreeSpace = 0
+	chunkserver.MaxFreeSpace = 0
+	chunkserver.PendingWrites = 0
+	chunkserver.WritingCount = 0
+	chunkserver.DataDir = ""
+	chunkserver.ReadingCount = 0
+	chunkserver.TotalChunks = 0
+	chunkserver.ConnectionsCount = 0
+
 	err := mdDriver.AddChunkserver(chunkserver)
 	if err != nil {
 		return err
@@ -273,6 +309,16 @@ func addChunkserver(chunkserver *metadata.Chunkserver) error {
 	serverInfoTemp[key] = chunkserver
 	serverInfo = serverInfoTemp
 
+	return nil
+}
+
+func batchAddChunkserver(chunkserverList *[]metadata.Chunkserver) error {
+	for _, chunkserver := range *chunkserverList {
+		err := addChunkserver(&chunkserver) 
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
