@@ -31,10 +31,8 @@ type MetaDataDriver interface {
 	AddChunkserver(chunkserver *Chunkserver) error
 	UpdateChunkserverStatus(chunkserver *Chunkserver, preStatus int, status int) error
 	IsExistChunkserver(chunkServer *Chunkserver) (bool, error)
-	//UpdateChunkserver(chunkserver *Chunkserver) error
 	UpdateChunkserverInfo(chunkserver *Chunkserver, preStatus int, status int) error
 	ListChunkserver() (Chunkservers, error)
-	//UpdateChunkserverAbortCount(ip string, port, status, errStatus int) error
 	UpdateChunkserverNORMAL(ip string, port, status, count int) error
 	UpdateChunkserverERROR(ip string, port, status, count int) error
 
