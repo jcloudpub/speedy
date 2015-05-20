@@ -41,5 +41,4 @@ func main() {
 		log.Errorf("start error: %v", err)
 		return
 	}
-	log.Infof("start success")
 }

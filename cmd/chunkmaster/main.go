@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"os"
+	"strconv"
 	"flag"
 	"runtime"
 	"net/http"
@@ -17,12 +17,13 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	var serverPort = flag.Uint("p", 8099, "chunkmaster server port")
-	var metaHost = flag.String("h", "127.0.0.1", "db ip")
-	var metaPort = flag.String("m", "3306", "db port")
-	var user = flag.String("u", "root", "db user")
-	var passwd = flag.String("w", "", "db passwd")
-	var db = flag.String("d", "speedy", "db name")
+	var serverHost = flag.String("h", "0.0.0.0", "chunkmaster listen ip")
+	var serverPort = flag.Int("p", 8099, "chunkmaster listen port")
+	var metaHost = flag.String("dh", "127.0.0.1", "database ip")
+	var metaPort = flag.String("dp", "3306", "database port")
+	var user = flag.String("u", "root", "database user")
+	var passwd = flag.String("pw", "", "database passwd")
+	var db = flag.String("d", "speedy", "database name")
 	var debug = flag.Bool("D", false, "log debug level")
 
 	flag.Parse()
@@ -46,7 +47,7 @@ func main() {
 	http.Handle("/", router)
 	log.Infof("listening in port %d", *serverPort)
 
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", *serverPort), nil);err != nil {
+	if err := http.ListenAndServe(*serverHost + ":"+ strconv.Itoa(*serverPort), nil); err != nil {
 		log.Errorf("listening err %v", err)
 		os.Exit(-1)
 	}
