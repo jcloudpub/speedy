@@ -22,15 +22,8 @@ type MysqlDriver struct{
 
 var mysqlDB *sql.DB
 
-func InitMeta(metaHost string) {
-	infos := strings.Split(metaHost, ";")
-
-	if len(infos) != 5 {
-		fmt.Println("invalid metaHost:", infos)
-		return
-	}
-
-	db, err := newMySqlConn(infos[0], infos[1], infos[2], infos[3], infos[4])
+func InitMeta(metadbIp string, metadbPort int, metadbUser, metadbPassword, metaDatabase string) {
+	db, err := newMySqlConn(metadbIp, metadbPort, metadbUser, metadbPassword, metaDatabase)
 	if err != nil {
 		mysqlDB = nil
 	}
@@ -40,6 +33,7 @@ func InitMeta(metaHost string) {
 
 	go connHeartBeater(mysqlDB)
 }
+
 
 func (db *MysqlDriver)StoreMetaInfo(metaInfo *MetaInfo) error {
 	if metaInfo.Value.IsLast && metaInfo.Value.Index == 0 {
@@ -187,8 +181,8 @@ func (db *MysqlDriver)GetFragmentMetaInfo(path string, index, start, end uint64)
 	return metaInfoValue, nil
 }
 
-func newMySqlConn(ip string, port string, user string, passwd string, database string) (*sql.DB, error) {
-	args := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", user, passwd, ip, port, database)
+func newMySqlConn(ip string, port int, user string, passwd string, database string) (*sql.DB, error) {
+	args := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8", user, passwd, ip, port, database)
 	db, err := sql.Open("mysql", args)
 	if err != nil {
 		return nil, err

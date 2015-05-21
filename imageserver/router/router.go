@@ -43,11 +43,15 @@ type Server struct {
 	metaDriver		  meta.MetaDriver
 	limitNum		  int
 	getFidRetryCount  int32
-	metaHost          string
+	metadbIp          string
+	metadbPort		  int
+	metadbUser		  string
+	metadbPassword	  string
+	metaDatabase	  string
 }
 
 
-func NewServer(masterUrl, ip string, port int, num int, metaHost string) *Server {
+func NewServer(masterUrl, ip string, port int, num int, metadbIp string, metadbPort int, metadbUser, metadbPassword, metaDatabase string) *Server {
 	return &Server{
 		MasterUrl:		   masterUrl,
 		Ip:                ip,
@@ -57,7 +61,11 @@ func NewServer(masterUrl, ip string, port int, num int, metaHost string) *Server
 		connectionPools:   nil,
 		limitNum:		   num,
 		getFidRetryCount:  0,
-		metaHost:          metaHost,
+		metadbIp:          metadbIp,
+		metadbPort:		   metadbPort,
+		metadbUser:		   metadbUser,
+		metadbPassword:	   metadbPassword,
+		metaDatabase:	   metaDatabase,
 	}
 }
 
@@ -905,7 +913,7 @@ func (s *Server) Run() error {
 	go s.GetFidRangeTicker()
 	go s.GetChunkServerInfoTicker()
 
-	mysqldriver.InitMeta(s.metaHost)
+	mysqldriver.InitMeta(s.metadbIp, s.metadbPort, s.metadbUser, s.metadbPassword, s.metaDatabase)
 	s.metaDriver = new(mysqldriver.MysqlDriver)
 
 	http.Handle("/", s.router)
