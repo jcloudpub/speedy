@@ -45,10 +45,10 @@ func main() {
 
 	router := initRouter()
 	http.Handle("/", router)
-	log.Infof("listening in port %d", *serverPort)
+	log.Infof("listen %s:%d", *serverHost, *serverPort)
 
 	if err := http.ListenAndServe(*serverHost + ":"+ strconv.Itoa(*serverPort), nil); err != nil {
-		log.Errorf("listening err %v", err)
+		log.Errorf("listen err %v", err)
 		os.Exit(-1)
 	}
 }
