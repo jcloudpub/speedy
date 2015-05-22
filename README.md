@@ -49,20 +49,138 @@ It is an another distributed key-value storage used by [jcloud.com](http://jclou
 
 Quick Install
 =============
+we will demonstrate how to install speedy in one host 
+assume the work directory is test
+mkdir /test
+mkdir -p /test/chunkmaster
+mkdir -p /test/imageserver
+mkdir -p /test/chunkserver
+mkdir -p /test/registry
 
-* docker-registry-speedy-driver   
+
+* how to make        
+cd speedy
+./bootstrap.sh
+. ./dev.env
+make
+
+cp bin/chunkmaster /test/chunkmaster
+cp bin/imageserver /test/imageserver
+cp bin/spy_server /test/chunkserver
+cp docker_registry/docker-registry-0.9.0.tar.gz /test/registry
+cp docker_registry/docker-registry-core-2.0.3.tar.gz /test/registry
+cp -r docker_registry_speedy_driver/ /test/registry
+
+
+* metaserver(database)   
+install mysql
+create database speedy //used by chunkmaster
+create table gen_fid
+insert into gen_fid values(1, now(), now()); //init gen_fid and insert a record, set the init fid=1 (not 0)
+create table table_chunkserver
+
+create database metadb //used by imageserver
+create table key_list
+
+* chunkmaster   
+./chunkmaster --help
+Usage of ./chunkmaster:
+  -D=false: log debug level
+  -d="speedy": database name
+  -dh="127.0.0.1": database ip
+  -dp="3306": database port
+  -h="0.0.0.0": chunkmaster listen ip
+  -p=8099: chunkmaster listen port
+  -pw="": database passwd
+  -u="root": database user
+cd /test/chunkmaster
+./chunkmaster //use default param
+
+
+init chunkserver
+vim serverlist.json
+example:
+init one group:
+[
+{"GroupId":1,"Ip":"127.0.0.1","Port":7654},
+{"GroupId":1,"Ip":"127.0.0.1","Port":7655},
+{"GroupId":1,"Ip":"127.0.0.1","Port":7656}
+]
+call init api of chunkmaster by curl
+curl -i -X POST --data @serverlist.json "http://127.0.0.1:8099/v1/chunkserver/batchinitserver"
+
+
+if you want to add two groups, the example of two groups's json:
+[
+{"GroupId":1,"Ip":"127.0.0.1","Port":7654},
+{"GroupId":1,"Ip":"127.0.0.1","Port":7655},
+{"GroupId":1,"Ip":"127.0.0.1","Port":7656},
+{"GroupId":2,"Ip":"127.0.0.1","Port":7664},
+{"GroupId":2,"Ip":"127.0.0.1","Port":7665},
+{"GroupId":2,"Ip":"127.0.0.1","Port":7666}
+]
+
+* chunkserver   
+mkdir -p /test/chunkserver/group-1/chunkserver-7654
+mkdir -p /test/chunkserver/group-1/chunkserver-7655
+mkdir -p /test/chunkserver/group-1/chunkserver-7656
+mkdir -p /test/chunkserver/log-group-1
+
+cd /test/chunkserver
+vim start.sh
+#!/bin/bash
+./spy_server -h 127.0.0.1 -p 7654 -w /test/chunkserver/group-1/server-7654 -e /test/chunkserver/log-group-1/chunkserverlog-7654 -s 1 -l 200 -n 5 -m 127.0.0.1 -r 8099 -d
+./spy_server -h 127.0.0.1 -p 7655 -w /test/chunkserver/group-1/server-7655 -e /test/chunkserver/log-group-1/chunkserverlog-7655 -s 1 -l 200 -n 5 -m 127.0.0.1 -r 8099 -d
+./spy_server -h 127.0.0.1 -p 7656 -w /test/chunkserver/group-1/server-7656 -e /test/chunkserver/log-group-1/chunkserverlog-7656 -s 1 -l 200 -n 5 -m 127.0.0.1 -r 8099 -d
+
+sh start.sh
+
+
+* imageserver    
+./imageserver
+Usage of ./imageserver:
+  -D=false: log debug level
+  -db="metadb": meta database
+  -dh="127.0.0.1": metadb ip
+  -dp=3306: metadb port
+  -h="0.0.0.0": imageserver listen ip
+  -mh="127.0.0.1": chunkmaster ip
+  -mp=8099: chunkmaster port
+  -n=2: the limit num of available chunkserver each chunkserver group
+  -p=6788: imageserver listen port
+  -pw="": metadb password
+  -u="root": metadb use
+
+cd /test/imageserver
+./imageserver //use default param
+
+
+* docker-registry/speedy-driver  
+
+maybe need to install python-pip, python-devel or liblzma depend on your environment
+
+cd /test/registry
+tar xvf docker-registry-core-2.0.3.tar.gz
+cd docker-registry-core-2.0.3  
+python setup.py install
+
+tar xvf docker-registry-0.9.0.tar.gz
+cd docker-registry-0.9.0
+python setup.py install
+
 cd docker-registry-speedy-driver   
 python setup.py install   
 
-* imageserver/chunkmaster/chunktool      
-cd src/github.com/speedycn    
-./bootstrap.sh   
-. ./dev.env   
-make   
+cp config_sample.yml  config.yml
+vim dev.env
+export GUNICORN_WORKERS=16
+export SETTINGS_FLAVOR=speedy
+export SPEEDY_TMPDIR=/test/registry/temp //speedy use this dir to storage temp file
+export DOCKER_REGISTRY_CONFIG=/test/registry/docker_registry_speedy_driver/config.yml
 
-* chunkserver   
-cd chunkserver   
-make   
+docker-registry //start docker-registry
+
+
 
 Startup sequence
 ================
