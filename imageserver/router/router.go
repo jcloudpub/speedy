@@ -29,7 +29,6 @@ const (
 	SUCCESS           = ""
 )
 
-
 type Server struct {
 	MasterUrl		  string
 	Ip                string
@@ -50,7 +49,6 @@ type Server struct {
 	metaDatabase	  string
 }
 
-
 func NewServer(masterUrl, ip string, port int, num int, metadbIp string, metadbPort int, metadbUser, metadbPassword, metaDatabase string) *Server {
 	return &Server{
 		MasterUrl:		   masterUrl,
@@ -68,7 +66,6 @@ func NewServer(masterUrl, ip string, port int, num int, metadbIp string, metadbP
 		metaDatabase:	   metaDatabase,
 	}
 }
-
 
 func (s *Server) initApi() {
 	m := map[string]map[string]http.HandlerFunc{
@@ -95,7 +92,6 @@ func (s *Server) initApi() {
 	s.router.NotFoundHandler = http.NotFoundHandler()
 }
 
-
 func (s *Server) responseResult(data []byte, statusCode int, err error, w http.ResponseWriter) {
 	if err != nil {
 		http.Error(w, err.Error(), statusCode)
@@ -107,7 +103,6 @@ func (s *Server) responseResult(data []byte, statusCode int, err error, w http.R
 	log.Debugf("responseResult len: %d", len(string(data)))
 	w.Write(data)
 }
-
 
 func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 	header := r.Header
@@ -228,7 +223,6 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 	s.responseResult(nil, http.StatusOK, nil, w)
 }
 
-
 func (s *Server) getFileInfo(w http.ResponseWriter, r *http.Request) {
 	path := r.Header.Get(headerPath)
 
@@ -261,7 +255,6 @@ func (s *Server) getFileInfo(w http.ResponseWriter, r *http.Request) {
 	s.responseResult(jsonResult, http.StatusOK, nil, w)
 }
 
-
 func (s *Server) getDirectoryInfo(w http.ResponseWriter, r *http.Request) {
 	path := r.Header.Get(headerPath)
 
@@ -290,10 +283,8 @@ func (s *Server) getDirectoryInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Infof("[getDirectoryInfo] success, directory: %s, result: %s", path, string(jsonResult))
-
 	s.responseResult(jsonResult, http.StatusOK , nil, w)
 }
-
 
 func (s *Server) getFile(w http.ResponseWriter, r *http.Request) {
 	header := r.Header
@@ -359,11 +350,9 @@ func (s *Server) getFile(w http.ResponseWriter, r *http.Request) {
 	s.responseResult(data, http.StatusOK, nil, w)
 }
 
-
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 	s.responseResult([]byte("{OK}"), http.StatusOK, nil, w)
 }
-
 
 func (s *Server) deleteFile(w http.ResponseWriter, r *http.Request) {
 	path := r.Header.Get(headerPath)
@@ -378,10 +367,8 @@ func (s *Server) deleteFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Infof("[deleteFile] success. path: %s", path)
-
 	s.responseResult(nil, http.StatusNoContent, nil, w)
 }
-
 
 func (s *Server) splitRange(bytesRange string) (uint64, uint64, error) {
 	var start, end uint64
@@ -393,7 +380,6 @@ func (s *Server) splitRange(bytesRange string) (uint64, uint64, error) {
 
 	return start, end, nil
 }
-
 
 func (s *Server) handlePostResult(ch chan string, size int) error {
 	var result, tempResult string
@@ -420,7 +406,6 @@ func (s *Server) handlePostResult(ch chan string, size int) error {
 
 	return nil
 }
-
 
 func (s *Server) getFid() (uint64, error){
 	fileId, err := s.fids.GetFid()
@@ -459,7 +444,6 @@ func (s *Server) getFid() (uint64, error){
 
 	return fileId, nil
 }
-
 
 func (s *Server) postFileConcurrence(chunkServer *chunkserver.ChunkServer, data []byte, c chan string, fileId uint64) {
 	log.Debugf("postFileConcurrence === begin to get connection")
@@ -501,7 +485,6 @@ func (s *Server) postFileConcurrence(chunkServer *chunkserver.ChunkServer, data 
 	connPools.ReleaseConn(conn)
 	log.Debugf("release connection success")
 }
-
 
 func (s *Server) getOneNormalChunkServer(mi *meta.MetaInfo) (*chunkserver.ChunkServer, error) {
 	log.Debugf("getOneNormalChunkServer === begin")
@@ -579,7 +562,6 @@ func (s *Server) selectChunkServerGroupSimple(size int64, meta *meta.MetaInfoVal
 
 	return nil, fmt.Errorf("can not find an available chunkserver")
 }
-
 
 func (s *Server) selectChunkServerGroupComplex(size int64, meta *meta.MetaInfoValue) ([]chunkserver.ChunkServer, error) {
 	if size <= 0 {
@@ -666,7 +648,6 @@ func (s *Server) selectChunkServerGroupComplex(size int64, meta *meta.MetaInfoVa
 	return groups.GroupMap[resultGroupId], nil
 }
 
-
 func (s *Server) GetChunkServerInfo() error {
 	byteData, statusCode, err := util.Call("GET", s.MasterUrl, "/v1/chunkmaster/route", nil, nil)
 	if err != nil {
@@ -690,7 +671,6 @@ func (s *Server) GetChunkServerInfo() error {
 	s.handleChunkServerInfo(infos)
 	return nil
 }
-
 
 func (s *Server) GetFidRange(mergeWait bool) error {
 	if !s.fids.IsShortage() {
@@ -721,7 +701,6 @@ func (s *Server) GetFidRange(mergeWait bool) error {
 	s.fids.Merge(newFids.Start, newFids.End, mergeWait)
 	return nil
 }
-
 
 func (s *Server) handleChunkServerInfo(infos map[string][]chunkserver.ChunkServer) {
 	var (
@@ -785,14 +764,12 @@ func (s *Server) handleChunkServerInfo(infos map[string][]chunkserver.ChunkServe
 	}
 }
 
-
 func (s *Server) GetChunkServerGroups() *chunkserver.ChunkServerGroups {
 	s.mu.Lock()
 	groups := s.chunkServerGroups
 	s.mu.Unlock()
 	return groups
 }
-
 
 func (s *Server) GetConnectionPools() *chunkserver.ChunkServerConnectionPool {
 	s.mu.Lock()
@@ -801,13 +778,11 @@ func (s *Server) GetConnectionPools() *chunkserver.ChunkServerConnectionPool {
 	return connectionPool
 }
 
-
 func (s *Server) ReplaceChunkServerGroups(newGroups *chunkserver.ChunkServerGroups) {
 	s.mu.Lock()
 	s.chunkServerGroups = newGroups
 	s.mu.Unlock()
 }
-
 
 func (s *Server) ReplaceConnPoolsAndChunkServerGroups(newConnectionPool *chunkserver.ChunkServerConnectionPool, newGroups *chunkserver.ChunkServerGroups) {
 	s.mu.Lock()
@@ -825,10 +800,7 @@ func serverInfoDiff(newInfo, oldInfo map[string][]chunkserver.ChunkServer) (delS
 	return delServers, addServers
 }
 
-
-/*
-diff = info1 - (the intersectio of info1 and info2  )
- */
+//diff = info1 - (the intersection info1 and info2  )
 func infoDiff(info1, info2 map[string][]chunkserver.ChunkServer) ([]*chunkserver.ChunkServer) {
 	diffServers := make([]*chunkserver.ChunkServer, 0)
 
@@ -865,7 +837,6 @@ func infoDiff(info1, info2 map[string][]chunkserver.ChunkServer) ([]*chunkserver
 	return diffServers
 }
 
-
 func (s *Server) GetFidRangeTicker() {
 	timer := time.NewTicker(2 * time.Second)
 	for {
@@ -879,7 +850,6 @@ func (s *Server) GetFidRangeTicker() {
 	}
 }
 
-
 func (s *Server) GetChunkServerInfoTicker() {
 	timer := time.NewTicker(2 * time.Second)
 	for {
@@ -892,7 +862,6 @@ func (s *Server) GetChunkServerInfoTicker() {
 		}
 	}
 }
-
 
 func (s *Server) Run() error {
 	log.Infof("begin run")

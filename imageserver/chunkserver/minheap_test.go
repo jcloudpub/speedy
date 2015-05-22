@@ -5,7 +5,6 @@ import (
 	"testing"
 )
 
-
 func TestMaxHeadp(t *testing.T) {
 	minHeap := NewMinHeap(7)
 

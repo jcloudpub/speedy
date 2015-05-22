@@ -6,16 +6,12 @@ import (
 	"github.com/jcloudpub/speedy/imageserver/util/log"
 )
 
-/*
-[start, end)
-*/
+//[start, end)
 type Fids struct {
-
 	Start uint64 `json:"FidBegin"`
 	End   uint64 `json:"FidEnd"`
 	ch	  chan uint64
 }
-
 
 func NewFids() *Fids {
 	return &Fids {
@@ -25,11 +21,9 @@ func NewFids() *Fids {
 	}
 }
 
-
 var (
 	FIDS_EMPTY_ERR = fmt.Errorf("fids is empty")
 )
-
 
 func (fids *Fids) IsShortage() bool {
 	if len(fids.ch) < 20 && len(fids.ch) < cap(fids.ch) {
@@ -38,7 +32,6 @@ func (fids *Fids) IsShortage() bool {
 	return false
 }
 
-
 func (fids *Fids) ReSet(start, end uint64) {
 	for i := start; i < end; i++ {
 		if len(fids.ch) < cap(fids.ch) {
@@ -46,7 +39,6 @@ func (fids *Fids) ReSet(start, end uint64) {
 		}
 	}
 }
-
 
 func (fids *Fids) Merge(start uint64, end uint64, wait bool) {//[start, end)
 	log.Debugf("merge begin, start:%d, end:%d, wait: %s", start, end, wait)
@@ -75,7 +67,6 @@ func (fids *Fids) Merge(start uint64, end uint64, wait bool) {//[start, end)
 	log.Debugf("merge end")
 }
 
-
 func (fids *Fids) GetFid() (uint64, error) {
 	log.Debugf("GetFid from channel")
 	select {
@@ -86,7 +77,6 @@ func (fids *Fids) GetFid() (uint64, error) {
 		return 0, FIDS_EMPTY_ERR
 	}
 }
-
 
 func (fids *Fids) GetFidWait() (uint64, error) {
 	log.Debugf("GetFid from channel")

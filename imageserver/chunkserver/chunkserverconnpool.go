@@ -8,12 +8,10 @@ import (
 	"github.com/jcloudpub/speedy/imageserver/util/log"
 )
 
-
 type ChunkServerConnectionPool struct {
 	mu sync.Mutex
 	Pools map[string]*ConnectionPool// <ip:port>:connectionpool
 }
-
 
 func NewChunkServerConnectionPool() *ChunkServerConnectionPool {
 	return &ChunkServerConnectionPool {
@@ -22,13 +20,11 @@ func NewChunkServerConnectionPool() *ChunkServerConnectionPool {
 	}
 }
 
-
 func (cscp *ChunkServerConnectionPool) GetConn(chunkserver *ChunkServer) (PoolConnection, error) {
 	cscp.mu.Lock()
 	defer cscp.mu.Unlock()
 
 	key := fmt.Sprintf("%s:%d", chunkserver.Ip, chunkserver.Port)
-
 	pool, ok := cscp.Pools[key]
 	if !ok {
 		return nil, fmt.Errorf("pool %s not exist", key)
@@ -41,13 +37,11 @@ func (cscp *ChunkServerConnectionPool) ReleaseConn(pc PoolConnection) {
 	pc.Recycle()
 }
 
-
 func (cscp *ChunkServerConnectionPool) AddPool(chunkserver *ChunkServer) error {
 	cscp.mu.Lock()
 	defer cscp.mu.Unlock()
 
 	key := fmt.Sprintf("%s:%d", chunkserver.Ip, chunkserver.Port)
-
 	log.Debugf("ChunkServerConnectionPool AddPool: %s", key)
 
 	pool, ok := cscp.Pools[key]
@@ -66,7 +60,6 @@ func (cscp *ChunkServerConnectionPool) AddPool(chunkserver *ChunkServer) error {
 	return nil
 }
 
-
 func (cscp *ChunkServerConnectionPool) AddExistPool(key string, pool *ConnectionPool) {
 	cscp.mu.Lock()
 	defer cscp.mu.Unlock()
@@ -84,7 +77,6 @@ func (cscp *ChunkServerConnectionPool) AddExistPool(key string, pool *Connection
 	return
 }
 
-
 func (cscp *ChunkServerConnectionPool) RemovePool(chunkserver *ChunkServer) {
 	cscp.mu.Lock()
 	defer cscp.mu.Unlock()
@@ -94,7 +86,6 @@ func (cscp *ChunkServerConnectionPool) RemovePool(chunkserver *ChunkServer) {
 
 	delete(cscp.Pools, key)
 }
-
 
 func (cscp *ChunkServerConnectionPool) RemoveAndClosePool(chunkserver *ChunkServer) error {
 	cscp.mu.Lock()
@@ -113,4 +104,3 @@ func (cscp *ChunkServerConnectionPool) RemoveAndClosePool(chunkserver *ChunkServ
 	pool.Close()//TODO async close
 	return nil
 }
-

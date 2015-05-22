@@ -34,7 +34,6 @@ func InitMeta(metadbIp string, metadbPort int, metadbUser, metadbPassword, metaD
 	go connHeartBeater(mysqlDB)
 }
 
-
 func (db *MysqlDriver)StoreMetaInfo(metaInfo *MetaInfo) error {
 	if metaInfo.Value.IsLast && metaInfo.Value.Index == 0 {
 		err := db.DeleteFileMetaInfo(metaInfo.Path)
@@ -57,6 +56,7 @@ func (db *MysqlDriver)StoreMetaInfo(metaInfo *MetaInfo) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
