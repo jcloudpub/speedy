@@ -48,7 +48,7 @@ func (conn *MySqlConn) GetFid() (uint64, error) {
 	if rows.Next() {
 		var fid uint64
 
-	 	err = rows.Scan(&fid)
+		err = rows.Scan(&fid)
 		if err != nil {
 			return 0, err
 		}

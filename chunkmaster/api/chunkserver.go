@@ -68,7 +68,6 @@ func chunkserverMonitor(timeoutSecond int) {
 	}
 }
 
-
 func updateChunkserverInfo(key string, status int) {
 	lock.Lock()
 	chunkserver, ok := serverInfo[key]
@@ -126,7 +125,6 @@ func reportChunkserverInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	util.Response(nil, http.StatusOK, resp)
 }
 
-
 func reportChunkserverInfo(key string, chunkserver *metadata.Chunkserver, oldChunkserver *metadata.Chunkserver) error {
 	if oldChunkserver.Status == INIT_STATUS {
 		err := mdDriver.UpdateChunkserverInfo(chunkserver, INIT_STATUS, RW_STATUS)
@@ -153,7 +151,6 @@ func reportChunkserverInfo(key string, chunkserver *metadata.Chunkserver, oldChu
 		chunkserver.Status = RW_STATUS
 	}
 
-
 	chunkserver.UpdateTime = time.Now()
 
 	lock.Lock()
@@ -166,7 +163,6 @@ func reportChunkserverInfo(key string, chunkserver *metadata.Chunkserver, oldChu
 	serverInfo[key] = chunkserver
 	return nil
 }
-
 
 func initChunkserverHandler(resp http.ResponseWriter, req *http.Request) {
 	/*
@@ -242,7 +238,6 @@ func batchInitChunkserverHandler(resp http.ResponseWriter, req *http.Request) {
 	util.Response(nil, http.StatusOK, resp)
 }
 
-
 func loadChunkserverInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	err := LoadChunkserverInfo()
 	if err != nil {
@@ -252,7 +247,6 @@ func loadChunkserverInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	log.Infof("[loadChunkserverInfoHandler] load chunkserver info success")
 	util.Response(nil, http.StatusOK, resp)
 }
-
 
 func LoadChunkserverInfo() error {
 	chunkserverList, err := mdDriver.ListChunkserver()
@@ -278,7 +272,6 @@ func LoadChunkserverInfo() error {
 	log.Infof("[LoadChunkserverInfo]: %v", serverInfo)
 	return nil
 }
-
 
 func addChunkserver(chunkserver *metadata.Chunkserver) error {
 	chunkserver.Status = INIT_STATUS
@@ -322,7 +315,6 @@ func batchAddChunkserver(chunkserverList *[]metadata.Chunkserver) error {
 	return nil
 }
 
-
 func chunkserverCheckError(resp http.ResponseWriter, req *http.Request) {
 	chunkservers, err := mdDriver.ListChunkserver()
 	if err != nil {
@@ -345,7 +337,6 @@ func chunkserverCheckError(resp http.ResponseWriter, req *http.Request) {
 
 	util.Response(respData, http.StatusOK, resp)
 }
-
 
 func chunkmasterRouteHandler(resp http.ResponseWriter, req *http.Request) {
 	lock.RLock()
@@ -375,9 +366,7 @@ func chunkmasterRouteHandler(resp http.ResponseWriter, req *http.Request) {
 	util.Response(respData, http.StatusOK, resp)
 }
 
-
 func chunkmasterFidHandler(resp http.ResponseWriter, req *http.Request) {
-
 	fidBegin, fidEnd, err := allocFid()
 	if err != nil {
 		util.HandleError(resp, "", err, http.StatusInternalServerError)

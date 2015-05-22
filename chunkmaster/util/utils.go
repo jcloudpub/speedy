@@ -14,7 +14,6 @@ import (
 	"github.com/jcloudpub/speedy/chunkmaster/util/log"
 )
 
-
 func EncodeJson(data interface {}) ([]byte, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
@@ -22,7 +21,6 @@ func EncodeJson(data interface {}) ([]byte, error) {
 	}
 	return body, nil
 }
-
 
 func DecodeJson(data []byte) (map[string]interface {}, error) {
 	var m map[string]interface {}
@@ -32,7 +30,6 @@ func DecodeJson(data []byte) (map[string]interface {}, error) {
 	}
 	return m, nil
 }
-
 
 func Call(method, baseUrl, path string, body io.Reader, headers map[string][]string)([]byte, int, error) {
 	client := &http.Client{}
@@ -199,4 +196,3 @@ func CheckMapUInt32(m map[string]interface{}, key string) (uint32, error) {
 
 	return 0, fmt.Errorf(key + " is not uint32 type")
 }
-
