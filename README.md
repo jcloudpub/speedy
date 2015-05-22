@@ -49,44 +49,44 @@ It is an another distributed key-value storage used by [jcloud.com](http://jclou
 
 Quick Install
 =============
-we will demonstrate how to install speedy in one host<br/> 
-assume the work directory is test<br/>
-mkdir /test<br/> 
-mkdir -p /test/chunkmaster
-mkdir -p /test/imageserver
-mkdir -p /test/chunkserver
-mkdir -p /test/registry
+we will demonstrate how to install speedy in one host     
+assume the work directory is test    
+mkdir /test     
+mkdir -p /test/chunkmaster      
+mkdir -p /test/imageserver      
+mkdir -p /test/chunkserver      
+mkdir -p /test/registry       
 
 
 * how to make        
-cd speedy
-./bootstrap.sh
-. ./dev.env
-make
+cd speedy      
+./bootstrap.sh      
+. ./dev.env      
+make      
 
-cp bin/chunkmaster /test/chunkmaster
-cp bin/imageserver /test/imageserver
-cp bin/spy_server /test/chunkserver
-cp docker_registry/docker-registry-0.9.0.tar.gz /test/registry
-cp docker_registry/docker-registry-core-2.0.3.tar.gz /test/registry
-cp -r docker_registry_speedy_driver/ /test/registry
+cp bin/chunkmaster /test/chunkmaster      
+cp bin/imageserver /test/imageserver     
+cp bin/spy_server /test/chunkserver      
+cp docker_registry/docker-registry-0.9.0.tar.gz /test/registry      
+cp docker_registry/docker-registry-core-2.0.3.tar.gz /test/registry     
+cp -r docker_registry_speedy_driver/ /test/registry     
 
 
 * metaserver(database)   
-install mysql
-create database speedy //used by chunkmaster
-create table gen_fid
-insert into gen_fid values(1, now(), now()); //init gen_fid and insert a record, set the init fid=1 (not 0)
-create table table_chunkserver
+install mysql     
+create database speedy //used by chunkmaster     
+create table gen_fid      
+insert into gen_fid values(1, now(), now()); //init gen_fid and insert a record, set the init fid=1 (not 0)      
+create table table_chunkserver      
 
-create database metadb //used by imageserver
-create table key_list
+create database metadb //used by imageserver     
+create table key_list     
 
-* chunkmaster   
-./chunkmaster --help
-Usage of ./chunkmaster:       
-  -D=false: log debug level      
-  -d="speedy": database name       
+* chunkmaster    
+./chunkmaster --help     
+Usage of ./chunkmaster:         
+  -D=false: log debug level          
+  -d="speedy": database name         
   -dh="127.0.0.1": database ip     
   -dp="3306": database port       
   -h="0.0.0.0": chunkmaster listen ip      
@@ -120,16 +120,16 @@ if you want to add two groups, the example of two groups's json:
 {"GroupId":2,"Ip":"127.0.0.1","Port":7666}      
 ]     
 
-* chunkserver   
+* chunkserver    
 mkdir -p /test/chunkserver/group-1/chunkserver-7654      
 mkdir -p /test/chunkserver/group-1/chunkserver-7655      
 mkdir -p /test/chunkserver/group-1/chunkserver-7656      
 mkdir -p /test/chunkserver/log-group-1      
 
 cd /test/chunkserver        
-./spy_server -h 127.0.0.1 -p 7654 -w /test/chunkserver/group-1/server-7654 -e /test/chunkserver/log-group-1/chunkserverlog-7654 -s 1 -l 200 -n 5 -m 127.0.0.1 -r 8099 -d
-./spy_server -h 127.0.0.1 -p 7655 -w /test/chunkserver/group-1/server-7655 -e /test/chunkserver/log-group-1/chunkserverlog-7655 -s 1 -l 200 -n 5 -m 127.0.0.1 -r 8099 -d
-./spy_server -h 127.0.0.1 -p 7656 -w /test/chunkserver/group-1/server-7656 -e /test/chunkserver/log-group-1/chunkserverlog-7656 -s 1 -l 200 -n 5 -m 127.0.0.1 -r 8099 -d
+./spy_server -h 127.0.0.1 -p 7654 -w /test/chunkserver/group-1/server-7654 -e /test/chunkserver/log-group-1/chunkserverlog-7654 -s 1 -l 200 -n 5 -m 127.0.0.1 -r 8099 -d    
+./spy_server -h 127.0.0.1 -p 7655 -w /test/chunkserver/group-1/server-7655 -e /test/chunkserver/log-group-1/chunkserverlog-7655 -s 1 -l 200 -n 5 -m 127.0.0.1 -r 8099 -d     
+./spy_server -h 127.0.0.1 -p 7656 -w /test/chunkserver/group-1/server-7656 -e /test/chunkserver/log-group-1/chunkserverlog-7656 -s 1 -l 200 -n 5 -m 127.0.0.1 -r 8099 -d    
 
 
 * imageserver    
