@@ -53,7 +53,7 @@ see [INSTALL](INSTALL)
 
 Startup sequence
 ================
-1.metaserver
+1.metaserver     
 2.chunkmaster   
 3.chunkserver   
 4.imageserver   

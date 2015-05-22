@@ -52,7 +52,7 @@ start imageserver process
 * install docker_registry & speedy_docker_registry_driver
 
 1. install docker_registry dependent package
-maybe need to install python-pip, python-devel or liblzma
+need to install python-pip, python-devel and liblzma
 
 2. install docker_registry
 mkdir ~/registry
