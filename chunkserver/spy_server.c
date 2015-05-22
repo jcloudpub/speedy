@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <stddef.h>
 #include <inttypes.h>
+#include <getopt.h>
 
 #include "spy_utils.h"
 #include "spy_log.h"
@@ -30,8 +31,21 @@ spy_statistic_t statistic;
 
 spy_report_info_t report_info;
 
-static const char server_options[] = "m:r:p:h:w:e:s:l:n:f:d";
-
+static const char server_options[] = "m:r:p:h:w:e:g:b:c:f:d";
+const struct option server_long_options[] = {
+	{"ip",          1, NULL, 'h'},
+	{"master_ip",   1, NULL, 'm'},
+	{"port",        1, NULL, 'p'},
+	{"master_port", 1, NULL, 'r'},
+	{"data_dir",    1, NULL, 'w'},
+	{"error_log",   1, NULL, 'e'},
+	{"group_id",    1, NULL, 'g'},
+	{"mem_blocks",  1, NULL, 'b'},
+	{"chunks",      1, NULL, 'c'},
+	{"sync",        1, NULL, 'f'},
+	{"daemonize",   1, NULL, 'd'},
+	{NULL, 0, NULL, 0}
+};
 //forward declare
 static void spy_send_response_if_needed(spy_connection_t *conn);
 static void spy_free_client_connection(spy_connection_t *conn);
@@ -1265,17 +1279,17 @@ static void spy_setup_io_jobs()
 static void spy_usage()
 {
 	printf("<usage>:spy_server\n"
-			"-p <port>\n"
-			"-h <listen address>\n"
-			"-w <data directory>\n"
-			"-e <error log file>\n"
-			"-s <unique server id>\n"
-			"-l <memory limit (MB)>\n"
-			"-n <number of chunks>\n"
-			"-f <force sync write>\n"
-			"-d -running as daemon\n"
-		    "-m chunkmaster ip addr\n"
-		    "-r chunkmaster port\n"
+			"--port=<port>\n"
+			"--ip=<listen address>\n"
+			"--data_dir=<data directory>\n"
+			"--error_log=<error log file>\n"
+			"--group_id=<unique group id>\n"
+			"--mem_blocks=<memory blocks for stream buffer>\n"
+			"--chunks=<number of chunks>\n"
+			"--sync=<sync when write, 1 or 0>\n"
+			"--daemonize (running as daemon)\n"
+		    "--master_ip=<chunkmaster ip addr>\n"
+		    "--master_port=<chunkmaster port>\n"
 		);
 
 	exit(1);
@@ -1302,7 +1316,7 @@ static void spy_server_init()
 	config.chunk_size = DEF_CHUNK_SIZE;
 	config.n_chunks   = DEF_N_CHUNKS;
 	config.log_level  = DEF_LOG_LEVEL;
-	config.bind_addr  = NULL;
+	config.bind_addr  = "127.0.0.1";
 	config.mb_prealloc_count = PREALLOC_COUNT;
 	config.mb_limit   = DEFAULT_MEM_BLOCKS_LIMIT;
 	config.sync       = 0;
@@ -1342,14 +1356,14 @@ static void spy_signal_init()
 
 int main(int argc, char **argv)
 {
-	int ch, n;
+	int c, n;
 	char *p;
 
 	spy_signal_init();
 	spy_server_init();
 
-	while ((ch = getopt(argc, argv, server_options)) >= 0) {
-		switch (ch) {
+	while ((c = getopt_long(argc, argv, server_options, server_long_options, NULL)) >= 0) {
+		switch (c) {
 		case 'p':
 			config.port = strtol(optarg, &p, 10);
 			if (config.port <= 0 || config.port > UINT16_MAX ||
@@ -1368,20 +1382,36 @@ int main(int argc, char **argv)
 			break;
 		case 'h':
 			config.bind_addr = strdup(optarg);
+			if (!config.bind_addr) {
+				printf("dup bind_addr failed, not enough memory\n");
+				exit(1);
+			}
 			break;
 		case 'm':
 			config.master_addr = strdup(optarg);
+			if (!config.master_addr) {
+				printf("dup master_addr failed, not enough memory\n");
+				exit(1);
+			}
 			break;
 		case 'w':
 			config.data_dir = strdup(optarg);
+			if (!config.data_dir) {
+				printf("dup data_dir failed, not enough memory\n");
+				exit(1);
+			}
 			break;
 		case 'd':
 			config.daemonize = 1;
 			break;
 		case 'e':
 			config.log_path = strdup(optarg);
+			if (!config.log_path) {
+				printf("dup log_path failed, not enough memory\n");
+				exit(1);
+			}
 			break;
-		case 's':
+		case 'g':
 			config.server_id = strtol(optarg, &p, 10);
 			if (config.server_id <= 0 || config.server_id > UINT16_MAX ||
 				*p != '\0') {
@@ -1389,14 +1419,26 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 			break;
-		case 'l':
+		case 'b':
 			config.mb_limit = strtol(optarg, &p, 10);
+			if (config.mb_limit <= 0 || config.mb_limit > MAX_MEM_BLOCKS_LIMIT) {
+				printf("invalid memory block size\n");
+				exit(1);
+			}
 			break;
-		case 'n':
+		case 'c':
 			config.n_chunks = strtol(optarg, &p, 10);
+			if (config.n_chunks <= 0 || config.n_chunks > MAX_N_CHUNKS) {
+				printf("invalid n_chunks\n");
+				exit(1);
+			}
 			break;
 		case 'f':
 			config.sync = strtol(optarg, &p, 10);
+			if (config.sync != 1 && config.sync != 0) {
+				printf("invalid sync arguments\n");
+				exit(1);
+			}
 			break;
 		default:
 			spy_usage();

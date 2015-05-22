@@ -16,6 +16,7 @@
 
 #define DEF_CHUNK_SIZE       (1UL << 31)
 #define DEF_N_CHUNKS         20
+#define MAX_N_CHUNKS         (DEF_N_CHUNKS * 10)
 #define DEF_LOG_PATH         "./speedy.log"
 #define DEF_DATA_DIR         ""
 #define DEF_DAEMONIZE        0

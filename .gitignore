@@ -7,5 +7,6 @@
 *.pyc
 tags
 /bin
+/src
+/pkg
 spy_server
-

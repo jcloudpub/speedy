@@ -166,10 +166,11 @@ void *spy_report_routine(void *arg)
 			spy_log(ERROR, "read master resp error %s", strerror(errno));
 		}
 
-		//debug
 		http_resp[n] = '\0';
-		printf("master http resp %s\n", http_resp);
-		//debug end
+
+		if (strncmp(http_resp, "HTTP/1.1 200 OK", 15) != 0) {
+			spy_log(ERROR, "report chunk server status failed, http resp %s", http_resp);
+		}
 
 		close(fd);
 

@@ -128,7 +128,9 @@ static spy_file_parser_t *spy_alloc_file_parser(int fd, spy_chunk_t *chunk,
 	parser->chunk_id     = chunk->chunk_id;
 	parser->chunk_offset = chunk->current_offset;
 	parser->buf          = malloc(buffer_size);
+
 	assert(parser->buf);
+
 	parser->buf_size     = buffer_size;
 	parser->buf_pos      = 0;
 	parser->buf_left     = 0;
@@ -157,8 +159,7 @@ static int spy_parse_next_file(spy_file_parser_t *parser)
 		return 0;
 
 	// read data to buffer if there is not enough data
-	if (parser->buf_left < FILE_META_SIZE)
-	{
+	if (parser->buf_left < FILE_META_SIZE) {
 		if (parser->buf_left > 0)
 			memmove(parser->buf, parser->buf + parser->buf_pos, parser->buf_left);
 
@@ -541,7 +542,7 @@ void spy_fill_file_meta(spy_io_job_t *io_job, char *meta, size_t len)
 
 void WORKER_FN spy_write_file(spy_work_t *wk)
 {
-	int nwrite, shouldwrite, left;
+	int nwrite, shouldwrite, left, n;
 	size_t len;
 	uint64_t offset;
 	char filemeta[FILE_META_SIZE];
@@ -593,10 +594,20 @@ void WORKER_FN spy_write_file(spy_work_t *wk)
 	chunk->files_alloc++;
 	chunk->files_count++;
 	
-	spy_write_chunk_superblock(chunk);
+	n = spy_write_chunk_superblock(chunk);
+
+	if (n) {
+		//TODO: need double write buffer to avoid this
+		spy_log(ERROR, "sb write error, chunk file maybe broken");		
+	}
 	
-	if (config.sync)
-		spy_flush_and_sync_chunk(chunk);
+	if (!n && config.sync) {
+		n = spy_flush_and_sync_chunk(chunk);
+		if (n) {
+			spy_log(ERROR, "sb write fsync failed, err %s", strerror(errno));
+		}
+	}
+	
 
 	return;
 
@@ -655,7 +666,9 @@ void spy_create_or_recover_files(char *dir)
 	}
 
 	while ((file = readdir(d)) != NULL) {
-		if (file->d_type == DT_REG) {
+		if (file->d_type == DT_REG && 
+			spy_string_ends_with(file->d_name, ".chunk") &&
+			strncmp(file->d_name, "chunk_", 6) == 0) {
 			n = snprintf(chunk_path, 512, "%s/%s", dir, file->d_name);
 			assert(n < 512);
 

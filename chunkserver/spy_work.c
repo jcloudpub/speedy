@@ -113,7 +113,7 @@ static int spy_create_worker_threads(spy_work_queue_t *work_queue, int nr_thread
 
 spy_work_queue_t *spy_create_work_queue(int nr_threads)
 {
-	int ret;
+	int ret, n;
 
 	spy_work_queue_t *work_queue = malloc(sizeof(spy_work_queue_t));
 	assert(work_queue);
@@ -121,9 +121,14 @@ spy_work_queue_t *spy_create_work_queue(int nr_threads)
 	INIT_LIST_HEAD(&work_queue->pending_list);
 	INIT_LIST_HEAD(&work_queue->finished_list);
 
-	pthread_mutex_init(&work_queue->pending_lock, NULL);
-	pthread_mutex_init(&work_queue->finished_lock, NULL);
-	pthread_cond_init(&work_queue->pending_cond, NULL);
+	n = pthread_mutex_init(&work_queue->pending_lock, NULL);
+	assert(n == 0);
+
+	n = pthread_mutex_init(&work_queue->finished_lock, NULL);
+	assert(n == 0);
+
+	n = pthread_cond_init(&work_queue->pending_cond, NULL);
+	assert(n == 0);
 
 	spy_atomic_set(&work_queue->nr_works, 0);
 	spy_atomic_set(&work_queue->nr_threads, 0);
@@ -133,7 +138,7 @@ spy_work_queue_t *spy_create_work_queue(int nr_threads)
 	assert(work_queue->finished_event_fd);
 
 	ret = spy_create_worker_threads(work_queue, nr_threads);
-	assert(ret ==0);
+	assert(ret == 0);
 
 	return work_queue;
 }
