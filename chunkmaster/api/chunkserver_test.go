@@ -11,7 +11,6 @@ const (
 	HTTP_SERVER_HOST = "http://127.0.0.1:8099"
 )
 
-
 func TestChunkmasterRouteHandle(t *testing.T) {
 	respData, respCode, err := util.Call("GET", HTTP_SERVER_HOST, "/v1/chunkmaster/route", bytes.NewBuffer([]byte(`""`)), nil)
 	if err != nil || respCode != http.StatusOK {
@@ -22,7 +21,6 @@ func TestChunkmasterRouteHandle(t *testing.T) {
 	t.Log("respData", string(respData))
 }
 
-
 func TestChunkmasterFidHandle(t *testing.T) {
 	respData, respCode, err := util.Call("GET", HTTP_SERVER_HOST, "/v1/chunkmaster/fid", bytes.NewBuffer([]byte(`""`)), nil)
 	if err != nil || respCode != http.StatusOK {
@@ -32,7 +30,6 @@ func TestChunkmasterFidHandle(t *testing.T) {
 	}
 	t.Log("respData: ", string(respData))
 }
-
 
 func TestChunkserverInitServerHandler(t *testing.T) {
 	param := make(map[string]interface{})
@@ -52,7 +49,6 @@ func TestChunkserverInitServerHandler(t *testing.T) {
 
 	t.Log("respData: %v", string(respData))
 }
-
 
 func TestReportChunkserverInfoHandler(t *testing.T) {
 	param := make(map[string]interface{})
@@ -79,4 +75,3 @@ func TestReportChunkserverInfoHandler(t *testing.T) {
 	}
 	t.Log("reportChunkserverInfo success, respData: %v", respData)
 }
-

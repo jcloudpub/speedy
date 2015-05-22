@@ -48,8 +48,6 @@ func (r *RedisDriver)StoreMetaInfo(metaInfo *MetaInfo) error {
 	return nil
 }
 
-
-
 //repositories/username/ubuntu/tag_v2
 func (r *RedisDriver)HandlePath(path string) error {
 	lastSplitIndex := strings.LastIndex(path, SPLIT)
@@ -92,7 +90,6 @@ func (r *RedisDriver)DeleteMetaInfo(path string) error {
 
 	return nil
 }
-
 
 func (r *RedisDriver)GetDirectoryInfo(path string) ([]string, error) {
 	conn := redisPool.Get()

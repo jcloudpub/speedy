@@ -19,7 +19,6 @@ const (
 	GLOBAL_READ_STAUS = 8
 )
 
-
 type ChunkServer struct {
 	GroupId int32
 	Ip string
@@ -32,11 +31,9 @@ type ChunkServer struct {
 	WritingCount   int
 }
 
-
 type ChunkServerGroups struct {
 	GroupMap map[string][]ChunkServer //groupId <> []ChunkServer
 }
-
 
 var (
 	PUT uint8 = 0x00
@@ -44,17 +41,14 @@ var (
 	DELETE uint8 = 0x02
 )
 
-
 func (csgs *ChunkServerGroups) GetChunkServerGroup(groupId string) ([]ChunkServer, bool) {
 	group, ok := csgs.GroupMap[groupId]
 	return group, ok
 }
 
-
 func (csi *ChunkServer) HostInfoEqual(another *ChunkServer) bool {
 	return csi.Ip == another.Ip && csi.Port == another.Port
 }
-
 
 func (cs *ChunkServer) PutData(data []byte, conn *PooledConn, fileId uint64) error {
 	output := new(bytes.Buffer)
@@ -87,7 +81,6 @@ func (cs *ChunkServer) PutData(data []byte, conn *PooledConn, fileId uint64) err
 	log.Errorf("fileId: %d, upload failed, header[0] = %d, header[1] = %d", fileId, header[0], header[1])
 	return fmt.Errorf("upload error, code: %d", header[1])
 }
-
 
 func (cs *ChunkServer) GetData(miv *meta.MetaInfoValue, conn *PooledConn) ([]byte, error) {
 	//conn.SetReadDeadline(time.Now().Add(60*time.Second))
@@ -128,12 +121,10 @@ func (cs *ChunkServer) GetData(miv *meta.MetaInfoValue, conn *PooledConn) ([]byt
 	return data, nil
 }
 
-
 func (cs *ChunkServer) DeleteData(groupId, fileId string, conn *PooledConn) error {
 	//TODO send headerInfo
 	return nil
 }
-
 
 func parseUint32(data []byte) (uint32, error) {
 	buf := bytes.NewBuffer(data)
@@ -146,7 +137,6 @@ func parseUint32(data []byte) (uint32, error) {
 	return x, nil
 }
 
-
 func parseUint8(data []byte)(uint8, error) {
 	buf := bytes.NewBuffer(data)
 	var x uint8
@@ -157,9 +147,3 @@ func parseUint8(data []byte)(uint8, error) {
 
 	return x, nil
 }
-
-
-
-
-
-

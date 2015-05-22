@@ -37,7 +37,6 @@ func Call(method, baseUrl, path string, body io.Reader, headers map[string][]str
 	return dataBody, resp.StatusCode, nil
 }
 
-
 func GetRequestJsonParam(r *http.Request) (map[string]interface {}, error) {
 	data, err := ioutil.ReadAll(r.Body)
 
@@ -55,7 +54,6 @@ func GetRequestJsonParam(r *http.Request) (map[string]interface {}, error) {
 
 	return m, nil
 }
-
 
 func DecodeJson(data []byte) (map[string]interface {}, error) {
 	var m map[string]interface {}

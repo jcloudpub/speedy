@@ -30,7 +30,6 @@ const (
 		" FROM chunkserver WHERE deleted = 0 "
 )
 
-
 func (conn *MySqlConn) AddChunkserver(chunkserver *metadata.Chunkserver) error {
 	if conn == nil {
 		return fmt.Errorf("MySqlConn is nil")
@@ -51,7 +50,6 @@ func (conn *MySqlConn) AddChunkserver(chunkserver *metadata.Chunkserver) error {
 
 	return nil
 }
-
 
 func (conn *MySqlConn) IsExistChunkserver(chunkserver *metadata.Chunkserver) (bool, error) {
 	exist := false
@@ -79,7 +77,6 @@ func (conn *MySqlConn) IsExistChunkserver(chunkserver *metadata.Chunkserver) (bo
 	return exist, nil
 }
 
-
 func (conn *MySqlConn) UpdateChunkserverInfo(chunkserver *metadata.Chunkserver, preStatus int, status int) error {
 	if conn == nil {
 		return fmt.Errorf("MySqlConn is nil")
@@ -100,7 +97,6 @@ func (conn *MySqlConn) UpdateChunkserverInfo(chunkserver *metadata.Chunkserver, 
 	return nil
 }
 
-
 func (conn *MySqlConn) UpdateChunkserverStatus(chunkserver *metadata.Chunkserver, preStatus int, status int) error {
 	if conn == nil {
 		return fmt.Errorf("MySqlConn is nil")
@@ -118,7 +114,6 @@ func (conn *MySqlConn) UpdateChunkserverStatus(chunkserver *metadata.Chunkserver
 
 	return nil
 }
-
 
 func (conn *MySqlConn) UpdateChunkserverNORMAL(ip string, port, status, errStatus int) error {
 	if conn == nil {
@@ -138,7 +133,6 @@ func (conn *MySqlConn) UpdateChunkserverNORMAL(ip string, port, status, errStatu
 
 	return nil
 }
-
 
 func (conn *MySqlConn) UpdateChunkserverERROR(ip string, port, status, count int) error {
 	if conn == nil {

@@ -13,7 +13,6 @@ var (
 	path string = "repositories/username/ubuntu/tag_v2"
 )
 
-
 func TestRouterPostFile(t *testing.T) {
 	s := "hello world content"
 
@@ -34,7 +33,6 @@ func TestRouterPostFile(t *testing.T) {
 
 	t.Log("result: %s\n", string(result))
 }
-
 
 func postFile(t *testing.T, w *sync.WaitGroup) {
 	defer w.Done()
@@ -59,7 +57,6 @@ func postFile(t *testing.T, w *sync.WaitGroup) {
 	t.Log("result: %s\n", string(result))
 }
 
-
 func TestRouterPostFileConcurrent(t *testing.T) {
 	t.Log("begin")
 	var w sync.WaitGroup
@@ -71,8 +68,6 @@ func TestRouterPostFileConcurrent(t *testing.T) {
 	w.Wait()
 	t.Log("end")
 }
-
-
 
 func TestRouterGetFileInfo(t *testing.T) {
 	header := make(map[string][]string, 0)
@@ -89,7 +84,6 @@ func TestRouterGetFileInfo(t *testing.T) {
 
 	t.Log("result: %s\n", string(result))
 }
-
 
 func TestRouterGetDirectoryInfo(t *testing.T) {
 	header := make(map[string][]string, 0)
@@ -108,7 +102,6 @@ func TestRouterGetDirectoryInfo(t *testing.T) {
 	t.Log("result: %s\n", string(result))
 }
 
-
 func TestRouterDeleteMetaInfo(t *testing.T) {
 	header := make(map[string][]string, 0)
 	header["Path"] = []string{"testpath"}
@@ -125,7 +118,6 @@ func TestRouterDeleteMetaInfo(t *testing.T) {
 
 	t.Log("result: %s\n", string(result))
 }
-
 
 func TestRouterGetFile(t *testing.T) {
 	header := make(map[string][]string, 0)
@@ -148,7 +140,6 @@ func TestRouterGetFile(t *testing.T) {
 	t.Log("result: %s\n", string(result))
 }
 
-
 func TestRouterGetFileCurrent(t *testing.T) {
 	t.Log("TestRouterGetFileCurrent begin")
 	var w sync.WaitGroup
@@ -160,7 +151,6 @@ func TestRouterGetFileCurrent(t *testing.T) {
 	w.Wait()
 	t.Log("TestRouterGetFileCurrent end")
 }
-
 
 func GetFileCurrent(t *testing.T, w *sync.WaitGroup) {
 	t.Log("begin == GetFileCurrent")
@@ -188,4 +178,3 @@ func GetFileCurrent(t *testing.T, w *sync.WaitGroup) {
 	t.Log("result: %s\n", string(result))
 	w.Done()
 }
-

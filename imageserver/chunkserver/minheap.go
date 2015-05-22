@@ -5,7 +5,6 @@ import (
 	"github.com/jcloudpub/speedy/imageserver/util/log"
 )
 
-
 type HeapElement struct {
 	GroupId string
 	FreeSpace int64
@@ -18,7 +17,6 @@ type MinHeap struct {
 	size int
 	arr []*HeapElement
 }
-
 
 func NewMinHeap(capa int) *MinHeap {
 	return &MinHeap{
@@ -63,11 +61,9 @@ func (h *MinHeap) AddElement(groupId string, freeSpace int64, pendingWrites int,
 	}
 }
 
-
 func (h *MinHeap) GetSize() int {
 	return h.size
 }
-
 
 func (h *MinHeap) buildMinHeap() {
 	log.Debugf("buildMinHeap ==== begin")
@@ -82,7 +78,6 @@ func (h *MinHeap) buildMinHeap() {
 	log.Debugf("buildMinHeap ==== end")
 }
 
-
 func (h *MinHeap) BuildMinHeapSecondary() {
 	log.Debugf("rebuild ==== begin")
 	for index := h.size/2 - 1; index >= 0; index-- {
@@ -94,8 +89,6 @@ func (h *MinHeap) BuildMinHeapSecondary() {
 	}
 	log.Debugf("rebuild ==== end")
 }
-
-
 
 func (h *MinHeap) minHeapify(index int) {
 	leftIndex := left(index)
@@ -138,7 +131,6 @@ func (h *MinHeap) compare(parent int, child int) int {
 	return parent
 }
 
-
 //the smaller is writingcount is smaller or pendingwrites is smaller
 func (h *MinHeap) compareSecondary(parent int, child int) int {
 	length := h.size
@@ -159,14 +151,10 @@ func (h *MinHeap) compareSecondary(parent int, child int) int {
 	return parent
 }
 
-
 func left(index int) int{
 	return index*2 + 1
 }
 
-
 func right(index int) int{
 	return index*2 + 2
 }
-
-

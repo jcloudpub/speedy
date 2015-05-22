@@ -15,7 +15,6 @@ type Conn struct {
 	//buffer *bytes.Buffer
 }
 
-
 func (c *Conn) Close() {
 	c.Conn.Close()
 	c.closed = true
@@ -30,7 +29,6 @@ type PooledConn struct {
 	pool *ConnectionPool
 }
 
-
 func (pc *PooledConn) Recycle() {
 	if pc.IsClosed() {
 		pc.pool.Put(nil)
@@ -38,16 +36,6 @@ func (pc *PooledConn) Recycle() {
 		pc.pool.Put(pc)
 	}
 }
-
-/*
-func (pc *PooledConn) Read() error {
-	//pc.br.ReadByte()
-	return nil
-}
-*/
-
-
-//TODO all chunkserver client operator
 
 func NewConnection(addr string)(*Conn, error) {
 	conn, err := net.Dial("tcp", addr)
@@ -72,6 +60,3 @@ func ConnectionCreator(addr string) CreateConnectionFunc {
 		return &PooledConn{c, pool}, nil
 	}
 }
-
-
-

@@ -226,5 +226,3 @@ func (rp *ResourcePool) WaitTime() time.Duration {
 func (rp *ResourcePool) IdleTimeout() time.Duration {
 	return rp.idleTimeout.Get()
 }
-
-

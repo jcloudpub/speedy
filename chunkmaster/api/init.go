@@ -8,12 +8,10 @@ import (
 	"github.com/jcloudpub/speedy/chunkmaster/metadata/mysqldriver"
 )
 
-
 var mdDriver metadata.MetaDataDriver
 var fid *Fid
 var lock sync.RWMutex
 var serverInfo map[string]*metadata.Chunkserver //key--chunkserver
-
 
 type Fid struct {
 	sync.Mutex
@@ -44,4 +42,3 @@ func newFid() *Fid {
 	fid.End = 0
 	return fid
 }
-

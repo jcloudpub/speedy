@@ -43,7 +43,6 @@ func EncodeJson(data interface {}) ([]byte, error) {
 	return body, nil
 }
 
-
 func DecodeJson(data []byte) (map[string]interface {}, error) {
 	var m map[string]interface {}
 
