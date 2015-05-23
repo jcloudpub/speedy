@@ -78,6 +78,8 @@ export SETTINGS_FLAVOR=speedy
 export SPEEDY_TMPDIR=~/registry/temp //speedy use this dir to storage temp file    
 export DOCKER_REGISTRY_CONFIG=~/registry/docker_registry_speedy_driver/config.yml   
 
+. ./dev.env
+
 5. start docker registry
 docker-registry
 
