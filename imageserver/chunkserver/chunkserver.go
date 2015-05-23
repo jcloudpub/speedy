@@ -83,7 +83,6 @@ func (cs *ChunkServer) PutData(data []byte, conn *PooledConn, fileId uint64) err
 }
 
 func (cs *ChunkServer) GetData(miv *meta.MetaInfoValue, conn *PooledConn) ([]byte, error) {
-	//conn.SetReadDeadline(time.Now().Add(60*time.Second))
 	output := new(bytes.Buffer)
 	header := make([]byte, HEADERSIZE)
 
