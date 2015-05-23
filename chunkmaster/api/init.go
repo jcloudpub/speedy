@@ -11,7 +11,7 @@ import (
 var mdDriver metadata.MetaDataDriver
 var fid *Fid
 var lock sync.RWMutex
-var serverInfo map[string]*metadata.Chunkserver //key--chunkserver
+var serverInfo map[string]*metadata.Chunkserver //key[groupId:ip:port]--chunkserver
 
 type Fid struct {
 	sync.Mutex

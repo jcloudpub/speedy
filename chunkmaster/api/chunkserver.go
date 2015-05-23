@@ -103,7 +103,7 @@ func reportChunkserverInfoHandler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	key := fmt.Sprintf("%s:%d", chunkserver.Ip, chunkserver.Port)
+	key := fmt.Sprintf("%d:%s:%d", chunkserver.GroupId, chunkserver.Ip, chunkserver.Port)
 	log.Debugf("key: %v", key)
 	log.Debugf("serverInfo: %v", serverInfo)
 
@@ -261,15 +261,15 @@ func LoadChunkserverInfo() error {
 			continue
 		}
 
-		key := fmt.Sprintf("%s:%d", server.Ip, server.Port)
+		key := fmt.Sprintf("%d:%s:%d", server.GroupId, server.Ip, server.Port)
 		server.UpdateTime = now
 		serverInfoTemp[key] = server
+		log.Infof("[loadChunkserverInfo] server: %v", server)
 	}
 
 	lock.Lock()
 	serverInfo = serverInfoTemp
 	lock.Unlock()
-	log.Infof("[LoadChunkserverInfo]: %v", serverInfo)
 	return nil
 }
 
@@ -297,7 +297,7 @@ func addChunkserver(chunkserver *metadata.Chunkserver) error {
 		serverInfoTemp[key] = chunkserver
 	}
 
-	key := fmt.Sprintf("%s:%d", chunkserver.Ip, chunkserver.Port)
+	key := fmt.Sprintf("%d:%s:%d", chunkserver.GroupId, chunkserver.Ip, chunkserver.Port)
 	chunkserver.UpdateTime = time.Now()
 	serverInfoTemp[key] = chunkserver
 	serverInfo = serverInfoTemp
