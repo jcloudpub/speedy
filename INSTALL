@@ -12,8 +12,8 @@ Install
 
 * install metaserver(mysql)
 1. install mysql
-2. create metadata table in mysql
-mysql -h<ip> -P<port> -p<password> -u<user> < docs/metadata.sql
+2. create metadata table in mysql, include two datbases: speedy and metadb
+mysql -h<ip> -P<port> -p<password> -u<user> < docs/speedy.sql
 
 * install chunkmaster
 start chunkmaster process
