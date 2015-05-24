@@ -71,7 +71,7 @@ func (s *Server) initApi() {
 	m := map[string]map[string]http.HandlerFunc{
 		"GET": {
 			"/v1/fileinfo": s.getFileInfo,
-			"/v1/file":     s.getFile,
+			"/v1/file":     s.downloadFile,
 			"/v1/list_directory": s.getDirectoryInfo,
 		},
 		"POST": {
@@ -286,7 +286,7 @@ func (s *Server) getDirectoryInfo(w http.ResponseWriter, r *http.Request) {
 	s.responseResult(jsonResult, http.StatusOK , nil, w)
 }
 
-func (s *Server) getFile(w http.ResponseWriter, r *http.Request) {
+func (s *Server) downloadFile(w http.ResponseWriter, r *http.Request) {
 	header := r.Header
 	path := header.Get(headerPath)
 	fragmentIndex := header.Get(headerIndex)
@@ -305,7 +305,7 @@ func (s *Server) getFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Infof("[getFile] path: %s, fragmentIndex: %d, bytesRange: %d-%d", path, index, start, end)
+	log.Infof("[downloadFile] path: %s, fragmentIndex: %d, bytesRange: %d-%d", path, index, start, end)
 
 	metaInfoValue := &meta.MetaInfoValue{
 		Index: index,
@@ -327,9 +327,9 @@ func (s *Server) getFile(w http.ResponseWriter, r *http.Request) {
 
 	connPools := s.GetConnectionPools()
 	conn, err := connPools.GetConn(chunkServer)
-	log.Debugf("getFile getconnection success")
+	log.Debugf("downloadFile getconnection success")
 	if err != nil {
-		log.Errorf("getFile getconnection error: %v", err)
+		log.Errorf("downloadFile getconnection error: %v", err)
 		s.responseResult(nil, http.StatusInternalServerError, err, w)
 		return
 	}
@@ -342,7 +342,7 @@ func (s *Server) getFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Infof("[getFile] success. path: %s, fragmentIndex: %d, bytesRange: %d-%d", path, index, start, end)
+	log.Infof("[downloadFile] success. path: %s, fragmentIndex: %d, bytesRange: %d-%d", path, index, start, end)
 
 	connPools.ReleaseConn(conn)
 
