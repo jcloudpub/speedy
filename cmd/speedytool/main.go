@@ -18,7 +18,7 @@ func main() {
 	flag.Parse()
 	imageserverAddr := fmt.Sprintf("http://%s:%d", *imageserverIp, *imageserverPort)
 	partSize := *partSizeMB * 1024 *1024
-	speedytool.PostFileTestSpeedyConcurrency(imageserverAddr, *fileName, *numGoroutine, partSize)
+	speedytool.TestSpeedyConcurrency(imageserverAddr, *fileName, *numGoroutine, partSize)
 }
 
 
