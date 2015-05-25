@@ -60,6 +60,9 @@ func (db *MysqlDriver)StoreMetaInfo(metaInfo *MetaInfo) error {
 	return nil
 }
 
+//path: repositories/username/ubuntu/tag_v2
+//key: DIRECTORY_repositories/username/ubuntu
+//value: tag_v2
 func (db *MysqlDriver)ExtractDirectoryAndFile(path string) (string, string) {
 	lastSplitIndex := strings.LastIndex(path, SPLIT)
 	if lastSplitIndex == -1 {
