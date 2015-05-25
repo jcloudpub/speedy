@@ -1281,15 +1281,15 @@ static void spy_usage()
 	printf("<usage>:spy_server\n"
 			"--port=<port>\n"
 			"--ip=<listen address>\n"
+			"--group_id=<unique group id>\n"
 			"--data_dir=<data directory>\n"
 			"--error_log=<error log file>\n"
-			"--group_id=<unique group id>\n"
 			"--mem_blocks=<memory blocks for stream buffer>\n"
 			"--chunks=<number of chunks>\n"
 			"--sync=<sync when write, 1 or 0>\n"
-			"--daemonize (running as daemon)\n"
 		    "--master_ip=<chunkmaster ip addr>\n"
 		    "--master_port=<chunkmaster port>\n"
+			"--daemonize=<1 or 0>\n"
 		);
 
 	exit(1);
