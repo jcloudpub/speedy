@@ -25,12 +25,13 @@ const (
 	opcodeQueryIoStatus =  31
 	opcodeQeuryDetails  =  32
 )
-
+/*
 const (
 	statusRW            =  0
 	statusRO            =  1
 	statusPreRO         =  2
 )
+*/
 
 const (
 	QueryDetailHdrSize  =  68
