@@ -3,9 +3,9 @@ package chunkserver
 
 import (
 	"sync"
-	"github.com/jcloudpub/speedy/imageserver/pools"
 	"time"
 	"errors"
+	"github.com/jcloudpub/speedy/imageserver/pools"
 	"github.com/jcloudpub/speedy/imageserver/util/log"
 )
 

@@ -11,8 +11,6 @@ type Conn struct {
 	net.Conn
 	closed bool
 	br *bufio.Reader
-	//temp space for formatting integers and floats
-	//buffer *bytes.Buffer
 }
 
 func (c *Conn) Close() {

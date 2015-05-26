@@ -1,7 +1,6 @@
 package chunkserver
 
 import (
-	_"time"
 	"io"
 	"fmt"
 	"encoding/binary"

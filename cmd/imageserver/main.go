@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/jcloudpub/speedy/imageserver/router"
 	"flag"
 	"strconv"
 	"runtime"
 	"os"
 	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"github.com/jcloudpub/speedy/imageserver/router"
 )
 
 func main() {
