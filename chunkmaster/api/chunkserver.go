@@ -74,8 +74,8 @@ func updateChunkserverInfo(key string, status int) {
 	lock.Lock()
 	chunkserver, ok := serverInfo[key]
 	if !ok {
-		log.Errorf("[updateServerInfo] chunkserver: %v do not exist", key)
 		lock.Unlock()
+		log.Errorf("[updateServerInfo] chunkserver: %v do not exist", key)
 		return
 	}
 
@@ -156,13 +156,13 @@ func reportChunkserverInfo(key string, chunkserver *metadata.Chunkserver, oldChu
 	chunkserver.UpdateTime = time.Now()
 
 	lock.Lock()
-	defer lock.Unlock()
 	_, ok := serverInfo[key]
 	if !ok {
 		lock.Unlock()
 		return fmt.Errorf("do not exist: %v", chunkserver)
 	}
 	serverInfo[key] = chunkserver
+	lock.Unlock()
 	return nil
 }
 
@@ -329,17 +329,9 @@ func addChunkserver(chunkserver *metadata.Chunkserver) error {
 	lock.Lock()
 	defer lock.Unlock()
 
-	serverInfoOld := serverInfo
-	serverInfoTemp := make(map[string]*metadata.Chunkserver)
-	for key, chunkserver := range serverInfoOld {	
-		serverInfoTemp[key] = chunkserver
-	}
-
 	key := fmt.Sprintf("%d:%s:%d", chunkserver.GroupId, chunkserver.Ip, chunkserver.Port)
 	chunkserver.UpdateTime = time.Now()
-	serverInfoTemp[key] = chunkserver
-	serverInfo = serverInfoTemp
-
+	serverInfo[key] = chunkserver
 	return nil
 }
 
@@ -378,23 +370,22 @@ func chunkserverCheckError(resp http.ResponseWriter, req *http.Request) {
 
 func chunkmasterRouteHandler(resp http.ResponseWriter, req *http.Request) {
 	lock.RLock()
-	serverInfoTemp := serverInfo
 
-	chunkGroup := make(map[string]metadata.Chunkservers)
-	for _, chunkserver := range serverInfoTemp {
+	chunkserverGroup := make(map[string]metadata.Chunkservers)
+	for _, chunkserver := range serverInfo {
 		groupId := fmt.Sprintf("%v", chunkserver.GroupId)
 
-		list, ok := chunkGroup[groupId]
+		list, ok := chunkserverGroup[groupId]
 		if !ok {
 			list = make(metadata.Chunkservers, 0, 3)
 		}
 
-		chunkGroup[groupId] = append(list, chunkserver)
+		chunkserverGroup[groupId] = append(list, chunkserver)
 	}
 
 	lock.RUnlock()
 
-	respData, err := util.EncodeJson(chunkGroup)
+	respData, err := util.EncodeJson(chunkserverGroup)
 	if err != nil {
 		util.HandleError(resp, "", err, http.StatusInternalServerError)
 		return
