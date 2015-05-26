@@ -47,7 +47,7 @@ func (fids *Fids) Merge(start uint64, end uint64, wait bool) {//[start, end)
 		for i := start; i < end; i++ {
 			select {
 			case fids.ch <-i:
-				log.Infof("%d put to channel success", i)
+				log.Debugf("fid %d put to channel success", i)
 			default:
 				log.Infof("fid channel is full")
 				return
@@ -57,12 +57,10 @@ func (fids *Fids) Merge(start uint64, end uint64, wait bool) {//[start, end)
 		return
 	}
 
-	log.Debugf("meger === wait=== 1")
 	for i := start; i < end; i++ {
 		fids.ch <- i
 		log.Debugf("%d put to channel success", i)
 	}
-	log.Debugf("meger === wait=== 2")
 
 	log.Debugf("merge end")
 }

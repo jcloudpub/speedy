@@ -1,6 +1,7 @@
 package router
 
 import (
+	"os"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -863,25 +864,28 @@ func (s *Server) GetChunkServerInfoTicker() {
 }
 
 func (s *Server) Run() error {
-	log.Infof("begin run")
-
 	s.initApi()
 	err := s.GetChunkServerInfo()
 	if err != nil {
 		log.Errorf("GetChunkServerInfo error: %s", err)
-		panic(err)
+		os.Exit(1)
 	}
 
 	err = s.GetFidRange(false)
 	if err != nil {
 		log.Errorf("GetFidRange error: %s", err)
-		panic(err)
+		os.Exit(1)
 	}
 
 	go s.GetFidRangeTicker()
 	go s.GetChunkServerInfoTicker()
 
-	mysqldriver.InitMeta(s.metadbIp, s.metadbPort, s.metadbUser, s.metadbPassword, s.metaDatabase)
+	err = mysqldriver.InitMeta(s.metadbIp, s.metadbPort, s.metadbUser, s.metadbPassword, s.metaDatabase)
+	if err != nil {
+		log.Errorf("connect metadb error: %v", err)
+		os.Exit(1)
+	}
+
 	s.metaDriver = new(mysqldriver.MysqlDriver)
 
 	http.Handle("/", s.router)

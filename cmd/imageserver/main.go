@@ -38,8 +38,7 @@ func main() {
 	log.Infof("the limit num of available chunkserver: %d", *limitNum)
 
 	server := router.NewServer(masterUrl, *host, *port, *limitNum, *metaIp, *metaPort, *userName, *password, *metadb)
-	log.Infof("start")
-
+	log.Infof("imageserver start...")
 	err := server.Run()
 	if err != nil {
 		log.Errorf("start error: %v", err)

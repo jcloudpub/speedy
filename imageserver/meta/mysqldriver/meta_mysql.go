@@ -22,16 +22,23 @@ type MysqlDriver struct{
 
 var mysqlDB *sql.DB
 
-func InitMeta(metadbIp string, metadbPort int, metadbUser, metadbPassword, metaDatabase string) {
+func InitMeta(metadbIp string, metadbPort int, metadbUser, metadbPassword, metaDatabase string) error {
 	db, err := newMySqlConn(metadbIp, metadbPort, metadbUser, metadbPassword, metaDatabase)
 	if err != nil {
 		mysqlDB = nil
+		return err
 	}
 	db.SetMaxOpenConns(100)
 	db.SetMaxIdleConns(20)
 	mysqlDB = db
 
+	err = checkConn(mysqlDB)
+	if err != nil {
+		return err
+	}
+
 	go connHeartBeater(mysqlDB)
+	return nil
 }
 
 func (db *MysqlDriver)StoreMetaInfo(metaInfo *MetaInfo) error {
