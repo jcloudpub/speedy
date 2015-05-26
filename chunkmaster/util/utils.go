@@ -38,7 +38,6 @@ func Call(method, baseUrl, path string, body io.Reader, headers map[string][]str
 		return nil, 408, err
 	}
 
-	req.Header.Set("User-Agent", "XENIUMD-AGENT")
 	if method == "POST" {
 		req.Header.Set("Content-Type", "application/json")
 	}
