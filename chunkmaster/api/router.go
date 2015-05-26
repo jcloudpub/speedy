@@ -18,6 +18,7 @@ func init() {
 			"/v1/chunkmaster/route" : chunkmasterRouteHandler,
 			"/v1/chunkmaster/fid"	: chunkmasterFidHandler,
 
+			"/v1/chunkserver/{groupId}/groupinfo" : chunkserverGroupInfoHandler,
 			"/v1/chunkserver/checkerror" : chunkserverCheckError,
 		},
 	}

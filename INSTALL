@@ -53,6 +53,11 @@ how to test speedy is ok:
 dd if=/dev/zero of=test bs=512 count=65536
 ./speedytool
 
+how to get chunkservers' info:
+curl "http://chunkmasterIp:chunkmasterPort/v1/chunkserver/{groupId}/groupinfo" | python -mjson.tool
+example:
+curl  "http://127.0.0.1:8099/v1/chunkserver/1/groupinfo" | python -mjson.tool
+
 
 * install docker_registry & speedy_docker_registry_driver
 

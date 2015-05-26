@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"time"
 	"encoding/json"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/jcloudpub/speedy/chunkmaster/util"
 	"github.com/jcloudpub/speedy/chunkmaster/util/log"
 	"github.com/jcloudpub/speedy/chunkmaster/metadata"
@@ -246,6 +248,42 @@ func loadChunkserverInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 	log.Infof("[loadChunkserverInfoHandler] load chunkserver info success")
 	util.Response(nil, http.StatusOK, resp)
+}
+
+func chunkserverGroupInfoHandler(resp http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	groupIdStr, ok := vars["groupId"] 
+	if !ok {
+		util.HandleError(resp, "", fmt.Errorf("groupId is empty"), http.StatusBadRequest)
+		return
+	}
+
+	groupId, err := strconv.ParseInt(groupIdStr, 10, 0)
+	if err != nil {
+		util.HandleError(resp, "", err, http.StatusBadRequest) 
+		return
+	}
+
+	result, err := chunkserverGroupInfo(int(groupId))
+	if err != nil {
+		util.HandleError(resp, "", err, http.StatusBadRequest)
+		return
+	}
+	util.Response(result, http.StatusOK, resp)
+}
+
+func chunkserverGroupInfo(groupId int) ([]byte, error){
+	chunkserverGroup, err := mdDriver.ListChunkserverGroup(groupId)
+	if err != nil {
+		return nil, err
+	}
+
+	chunkserverGroupJsonByte, err := json.Marshal(chunkserverGroup)
+	if err != nil {
+		return nil, err
+	}
+
+	return chunkserverGroupJsonByte, nil 
 }
 
 func LoadChunkserverInfo() error {

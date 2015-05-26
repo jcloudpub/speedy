@@ -25,8 +25,17 @@ const (
 							" WHERE group_id = ? AND ip = ? AND port = ? AND status = ? AND deleted = 0"
 
 	UPDATE_CHUNKSERVER_NORMAL_STATUS = "UPDATE chunkserver SET abnormal_count = 0, status = ? WHERE ip = ? AND port = ? AND deleted = 0 AND status != ?"
+
 	UPDATE_CHUNKSERVER_ERROR_STATUS = "UPDATE chunkserver SET status = ? WHERE ip = ? AND port = ? AND deleted = 0 AND  abnormal_count > ?"
-	LIST_CHUNKSERVER_SQL = "SELECT chunkserver_id, group_id, ip, port, status, global_status, total_free_space, max_free_space, pend_writes, writing_count, data_path, reading_count, total_chunks, conn_counts " +
+
+	LIST_CHUNKSERVER_GROUPID_SQL = "SELECT chunkserver_id, group_id, ip, port, " + 
+	"status, global_status, total_free_space, max_free_space, pend_writes, " + 
+	"writing_count, data_path, reading_count, total_chunks, conn_counts " +
+		" FROM chunkserver WHERE deleted = 0 and group_id=?"
+
+	LIST_CHUNKSERVER_SQL = "SELECT chunkserver_id, group_id, ip, port, " + 
+	"status, global_status, total_free_space, max_free_space, pend_writes, " + 
+	"writing_count, data_path, reading_count, total_chunks, conn_counts " +
 		" FROM chunkserver WHERE deleted = 0 "
 )
 
@@ -184,5 +193,38 @@ func (conn *MySqlConn) ListChunkserver() (metadata.Chunkservers, error) {
 		chunkservers = append(chunkservers, chunkserver)
 	}
 
+	return chunkservers, nil
+}
+
+func (conn *MySqlConn) ListChunkserverGroup(groupId int) (metadata.Chunkservers, error) {
+	if conn == nil {
+		return nil, fmt.Errorf("MySqlConn is nil")
+	}
+
+	chunkservers := make(metadata.Chunkservers, 0, 3)
+
+	stmt, err := conn.db.Prepare(LIST_CHUNKSERVER_GROUPID_SQL)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(groupId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		chunkserver := new(metadata.Chunkserver)
+		err = rows.Scan(&chunkserver.Id, &chunkserver.GroupId, &chunkserver.Ip, &chunkserver.Port,
+			&chunkserver.Status, &chunkserver.GlobalStatus, &chunkserver.TotalFreeSpace, &chunkserver.MaxFreeSpace,
+			&chunkserver.PendingWrites, &chunkserver.WritingCount, &chunkserver.DataDir, &chunkserver.ReadingCount,
+			&chunkserver.TotalChunks, &chunkserver.ConnectionsCount)
+		if err != nil {
+			return nil, err
+		}
+		chunkservers = append(chunkservers, chunkserver)
+	}
 	return chunkservers, nil
 }
