@@ -1,14 +1,11 @@
 package meta
 
-import (
-	"encoding/json"
-)
-
 const (
 	TAG = "tag_"
 	SPLIT = "/"
 	DIRECTORY = "DIRECTORY_"
 )
+
 //TODO
 //groupId == 0 or fileId == 0
 //may cause error
@@ -32,24 +29,4 @@ type MetaDriver interface {
 	GetDirectoryInfo(path string) ([]string, error)
 	GetFileMetaInfo(path string, detail bool) ([]*MetaInfoValue, error)
 	GetFragmentMetaInfo(path string, index, start, end uint64) (*MetaInfoValue, error)
-}
-
-func EncodeJson(data interface {}) ([]byte, error) {
-	body, err := json.Marshal(data)
-
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
-}
-
-func DecodeJson(data []byte) (map[string]interface {}, error) {
-	var m map[string]interface {}
-
-	err := json.Unmarshal(data, &m)
-
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
 }

@@ -3,6 +3,7 @@ package mysqldriver
 import (
 	"fmt"
 	"strings"
+	"encoding/json"
 	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
 	. "github.com/jcloudpub/speedy/imageserver/meta"
@@ -17,7 +18,6 @@ const (
 )
 
 type MysqlDriver struct{
-
 }
 
 var mysqlDB *sql.DB
@@ -54,12 +54,12 @@ func (db *MysqlDriver)StoreMetaInfo(metaInfo *MetaInfo) error {
 		return err
 	}
 
-	json, err := EncodeJson(metaInfo.Value)
+	metaInfoValueJson, err := json.Marshal(metaInfo.Value)
 	if err != nil {
 		return err
 	}
 
-	err = pushList(mysqlDB, metaInfo.Path, string(json))
+	err = pushList(mysqlDB, metaInfo.Path, string(metaInfoValueJson))
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,8 @@ func (db *MysqlDriver)GetFileMetaInfo(path string, detail bool) ([]*MetaInfoValu
 	metaInfoValues := make([]*MetaInfoValue, 0)
 
 	for _, bts := range list {
-		jsonMap, err := DecodeJson([]byte(bts))
+		var jsonMap map[string]interface{}
+		err := json.Unmarshal([]byte(bts), &jsonMap) 
 		if err != nil {
 			return nil, err
 		}
