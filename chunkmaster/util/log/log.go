@@ -97,7 +97,7 @@ func (l Logger) logf(stream io.Writer, level priority, format string, a ...inter
 
 	if level <= errorPriority || level == debugPriority {
 		// Retrieve the stack infos
-		_, file, line, ok := runtime.Caller(4)
+		_, file, line, ok := runtime.Caller(3)
 		if !ok {
 			file = "<unknown>"
 			line = -1

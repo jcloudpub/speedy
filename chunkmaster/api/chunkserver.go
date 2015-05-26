@@ -26,8 +26,6 @@ const (
 
 	GLOBAL_NORMAL_STATUS = 0
 	GLOBAL_TRANSFER_STAUS = 8
-
-	RO_STATUS_COUNT_MAX = 5
 )
 
 func MonitorTicker(intervalSecond int, timeoutSecond int) {
