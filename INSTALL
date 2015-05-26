@@ -49,6 +49,11 @@ if you want to add two groups, the example of two groups's json:
 start imageserver process
 ./imageserver
 
+how to test speedy is ok:
+dd if=/dev/zero of=test bs=512 count=65536
+./speedytool
+
+
 * install docker_registry & speedy_docker_registry_driver
 
 1. install docker_registry dependent package
