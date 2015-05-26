@@ -7,7 +7,6 @@ import (
 	"github.com/jcloudpub/speedy/imageserver/chunkserver"
 	"github.com/jcloudpub/speedy/imageserver/meta"
 	"github.com/jcloudpub/speedy/imageserver/util"
-	_"github.com/jcloudpub/speedy/imageserver/meta/redisdriver"
 	"github.com/jcloudpub/speedy/imageserver/meta/mysqldriver"
 	"time"
 	"io/ioutil"
@@ -228,14 +227,14 @@ func (s *Server) getFileInfo(w http.ResponseWriter, r *http.Request) {
 
 	log.Infof("[getFileInfo] Path: %s", path)
 
-	result, err := s.metaDriver.GetFileMetaInfo(path, false)
-	if err != nil {
-		log.Errorf("getFileInfo get metainfo error, key: %s, error: %s", path, err)
-		s.responseResult(nil, http.StatusInternalServerError, err, w)
-		return
-	}
+    result, err := s.metaDriver.GetFileMetaInfo(path, false)
+    if err != nil {
+    	log.Errorf("getFileInfo get metainfo error, key: %s, error: %s", path, err)
+    	s.responseResult(nil, http.StatusInternalServerError, err, w)
+    	return
+    }
 
-	if len(result) == 0 {
+    if len(result) == 0 {
 		log.Infof("getFileInfo metainfo not exists, key: %s", path)
 		s.responseResult(nil, http.StatusNotFound, err, w)
 		return
