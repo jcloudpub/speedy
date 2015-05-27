@@ -49,7 +49,7 @@ It is an another distributed key-value storage used by [jcloud.com](http://jclou
 
 How To Install
 =============
-see [INSTALL](INSTALL) and [USAGE](USAGE)
+see [INSTALL](INSTALL) and [USAGE](USAGE.md)
 
 Startup sequence
 ================
