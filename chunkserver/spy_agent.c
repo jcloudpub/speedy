@@ -69,11 +69,15 @@ int spy_connect_master()
 
 	if (inet_pton(AF_INET, config.master_addr, &addr.sin_addr) <= 0) {
 		spy_log(ERROR, "inet_pton error %s", strerror(errno));
+		close(fd);
+
 		return -1;
     }
 
 	if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		spy_log(ERROR, "connect master error %s", strerror(errno));
+		close(fd);
+
 		return -1;
 	}
 
@@ -162,14 +166,16 @@ void *spy_report_routine(void *arg)
 		}
 
 		n = read(fd, http_resp, 4096);
-		if (n < 0) {
-			spy_log(ERROR, "read master resp error %s", strerror(errno));
-		}
 
-		http_resp[n] = '\0';
+		if (n > 0) {
+			http_resp[n] = '\0';
 
-		if (strncmp(http_resp, "HTTP/1.1 200 OK", 15) != 0) {
-			spy_log(ERROR, "report chunk server status failed, http resp %s", http_resp);
+			if (strncmp(http_resp, "HTTP/1.1 200 OK", 15) != 0) {
+				spy_log(ERROR, "report chunk server status failed, http resp %s", http_resp);
+			}
+		} else {
+			spy_log(ERROR, "read report chunk server status resp failed, nread %d, err %s", 
+					n, strerror(errno));
 		}
 
 		close(fd);
