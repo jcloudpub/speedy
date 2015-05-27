@@ -334,73 +334,6 @@ static void spy_check_chunk_done(spy_work_t *work)
 	spy_free_io_job(io_job);
 }
 
-/*
-static void spy_handle_set_status(spy_connection_t *conn)
-{
-	char buf[4];
-	size_t size;
-	uint32_t status;
-
-	// set status request = opcode(1) + body_len(4) + status(4)
-	assert (conn->body_len == 4);
-	size = spy_rw_buffer_read_n(&conn->request, buf, 4);
-	assert (size == 4);
-
-	status = spy_mach_read_from_4(buf);
-
-	switch (status) {
-		case STATUS_RW:
-			server.status = STATUS_RW;
-			break;
-		case STATUS_RO:
-			server.status = STATUS_PRE_RO;
-			break;
-		default:
-			spy_log(ERROR, "(spy_handle_set_status) invalid status:%u\n", status);
-			spy_free_client_connection(conn);
-			break;
-	}
-
-	conn->body_len = 0;
-	conn->error = SUCCESS;
-	conn->state = SEND_RSP;
-
-	spy_reply_header(conn);
-}
-
-static void spy_handle_get_status(spy_connection_t *conn)
-{
-	char body[4];
-
-	while (conn->rsp_body.cap < 4) {
-		if (spy_rw_buffer_expand(&conn->rsp_body) < 0) {
-			spy_log(ERROR, "expand rsp_body failed. reach mem blocks limit.");
-
-			conn->error = REACH_MEMORY_LIMIT;
-			goto ERROR_REPLY;
-		}
-	}
-
-	conn->body_len = 4;
-	conn->error    = SUCCESS;
-	spy_reply_header(conn);
-
-	spy_mach_write_to_4(body, server.status);
-	assert (spy_rw_buffer_write_n(&conn->rsp_body, body, 4) == 4);
-
-	conn->state = SEND_RSP;
-	spy_reply_body(conn);
-
-	return;
-
-ERROR_REPLY:
-	conn->body_len = 0;
-	conn->state    = SEND_RSP;
-
-	spy_reply_header(conn);
-}
-*/
-
 static void spy_kill_pending_writes(spy_connection_t *conn)
 {
 	spy_io_job_t *pending_wr;
@@ -879,15 +812,6 @@ static void spy_process_receive_buffer(spy_connection_t *conn)
 	if (conn->state == PROCESS_REQUEST) {
 		switch (conn->opcode) {
 		case OPCODE_WRITE:
-			/*if (server.status != STATUS_RW) {
-				conn->error    = SERVER_READ_ONLY;
-				conn->body_len = 0;
-				conn->state    = SEND_RSP;
-
-				spy_reply_header(conn);
-				return;
-			}*/
-
 			spy_handle_write(conn);
 			break;
 		case OPCODE_READ:
@@ -901,16 +825,6 @@ static void spy_process_receive_buffer(spy_connection_t *conn)
 		case OPCODE_CHECK_DISK:
 			spy_handle_check_disk(conn);
 			break;
-
-		/*
-		case OPCODE_SET_STATUS:
-			spy_handle_set_status(conn);
-			break;
-
-		case OPCODE_GET_STATUS:
-			spy_handle_get_status(conn);
-			break;
-		*/
 
 		case OPCODE_KILL_PD_WR:
 			spy_kill_pending_writes(conn);
@@ -946,14 +860,6 @@ static void spy_read_handler(aeEventLoop *el, int fd, void *priv, int mask)
 			// expand failed, reach mem block limit
                         
 			spy_log(ERROR, "expand request buffer failed");
-
-			/*
-			conn->state     = SEND_RSP;
-			conn->body_len  = 0;
-			conn->error     = REACH_MEMORY_LIMIT;
-
-			spy_reply_header(conn);
-			*/
 
 			spy_free_client_connection(conn);
 
@@ -1117,17 +1023,6 @@ static void spy_remove_timeout_pending_writes()
 	}
 }
 
-/*
-static void spy_update_server_status()
-{
-	if (server.status != STATUS_PRE_RO)
-		return;
-
-	if (server.pending_writes_size == 0 && list_empty(&server.writing_chunks))
-		server.status = STATUS_RO;
-}
-*/
-
 static int spy_server_cron(aeEventLoop *el, long long id, void *arg)
 {
 	spy_report_server_infos();
@@ -1278,18 +1173,19 @@ static void spy_setup_io_jobs()
 
 static void spy_usage()
 {
-	printf("<usage>:spy_server\n"
-			"--port=<port>\n"
-			"--ip=<listen address>\n"
-			"--group_id=<unique group id>\n"
-			"--data_dir=<data directory>\n"
-			"--error_log=<error log file>\n"
-			"--mem_blocks=<memory blocks for stream buffer>\n"
-			"--chunks=<number of chunks>\n"
-			"--sync=<sync when write, 1 or 0>\n"
-		    "--master_ip=<chunkmaster ip addr>\n"
-		    "--master_port=<chunkmaster port>\n"
-			"--daemonize=<1 or 0>\n"
+	printf("usage:spy_server\n"
+		   "===========================\n"
+		   "[--port=<port>]\n"
+		   "[--ip=<listen address>]\n"
+		   "[--data_dir=<data directory>]\n"
+		   "[--error_log=<error log file>]\n"
+		   "[--mem_blocks=<memory blocks for stream buffer>]\n"
+		   "[--chunks=<number of chunks>]\n"
+		   "[--sync=<sync when write, 1 or 0>]\n"
+		   "[--daemonize=<1 or 0>]\n"
+		   "--master_ip=<chunkmaster ip addr>\n"
+		   "--master_port=<chunkmaster port>\n"
+		   "--group_id=<unique group id>\n"
 		);
 
 	exit(1);
@@ -1316,10 +1212,11 @@ static void spy_server_init()
 	config.chunk_size = DEF_CHUNK_SIZE;
 	config.n_chunks   = DEF_N_CHUNKS;
 	config.log_level  = DEF_LOG_LEVEL;
-	config.bind_addr  = "127.0.0.1";
+	config.bind_addr  = DEF_SERVER_ADDR;
 	config.mb_prealloc_count = PREALLOC_COUNT;
-	config.mb_limit   = DEFAULT_MEM_BLOCKS_LIMIT;
+	config.mb_limit   = DEF_MEM_BLOCKS_LIMIT;
 	config.sync       = 0;
+	config.server_id  = -1;
 
 	memset(&server, 0x0, sizeof(server));
 
@@ -1352,6 +1249,22 @@ static void spy_signal_init()
 	act.sa_flags = SA_RESETHAND | SA_ONSTACK | SA_NODEFER;
 	act.sa_handler = spy_sigterm_handler;
 	sigaction(SIGTERM, &act, NULL);
+}
+
+void spy_check_server_options()
+{
+
+	int error = 0;
+
+	error = (config.master_addr == NULL ||
+			 config.master_port == 0    ||
+			 config.server_id == -1);
+
+	if (error) {
+		spy_usage();
+		exit(1);
+	}
+
 }
 
 int main(int argc, char **argv)
@@ -1445,10 +1358,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (strlen(config.data_dir) == 0) {
-		spy_usage();
-		exit(0);
-	}
+	spy_check_server_options();
 
 	spy_open_log_file();
 

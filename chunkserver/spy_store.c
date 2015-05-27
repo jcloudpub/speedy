@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <inttypes.h>
 
 #include "spy_server.h"
 #include "spy_store.h"
@@ -289,9 +290,9 @@ static void spy_setup_chunk(char *chunk_path)
 	spy_file_parser_t *parser;
 
 	/*
-        * 1. create spy_chunk_t struct,add it to chunks list
-	* 2. build in-memory file index
-	*/
+	 * 1. create spy_chunk_t struct,add it to chunks list
+	 * 2. build in-memory file index
+	 */
 	fd = open(chunk_path, O_RDWR, 0644);
 	assert(fd);
 
@@ -625,7 +626,7 @@ int spy_create_chunk()
 	spy_chunk_t *chunk = NULL, *tmp;
 
 	chunk_id = ++server.max_chunk_id;
-	n = snprintf(chunk_path, 512, "%s/chunk_%d_%ld.chunk", 
+	n = snprintf(chunk_path, 512, "%s/chunk_%d_%"PRIu64".chunk", 
                  config.data_dir, config.server_id, chunk_id);
 	assert(n < 512);
 
@@ -648,6 +649,21 @@ int spy_create_chunk()
 	return spy_write_chunk_superblock(chunk);
 }
 
+static int spy_check_filename_format(char *filename)
+{
+	int server_id, n;
+	uint64_t chunk_id;
+	char *pattern = "chunk_%d_%"PRIu64".chunk";
+
+	n = sscanf(filename, pattern, &server_id, &chunk_id);
+
+	if (n != 2 || server_id != config.server_id) {
+		return -1;
+	}
+
+	return 0;
+}
+
 void spy_create_or_recover_files(char *dir)
 {
 	int n, i;
@@ -666,13 +682,16 @@ void spy_create_or_recover_files(char *dir)
 	}
 
 	while ((file = readdir(d)) != NULL) {
-		if (file->d_type == DT_REG && 
-			spy_string_ends_with(file->d_name, ".chunk") &&
-			strncmp(file->d_name, "chunk_", 6) == 0) {
+		if (file->d_type == DT_REG) {
+			if (spy_check_filename_format(file->d_name)) {
+				spy_log(ERROR, "data directory contains invalid file or group id mismatch");
+				exit(1);
+			}
+
 			n = snprintf(chunk_path, 512, "%s/%s", dir, file->d_name);
 			assert(n < 512);
 
-			spy_setup_chunk(chunk_path);			
+			spy_setup_chunk(chunk_path);
 		}
 	}
 

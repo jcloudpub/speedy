@@ -188,12 +188,6 @@ void spy_start_agent_thread()
 {
 	pthread_t thread;
 
-	if (config.master_addr == NULL || config.master_port == 0) {
-		printf("chunkmaster addr or port must be given\n");
-		spy_log(ERROR, "chunkmaster addr or port must be given");
-		exit(1);
-	}
-
 	spy_atomic_set(&report_info.lock, 0);
 
 	assert(pthread_create(&thread, NULL, spy_report_routine, NULL) == 0);

@@ -18,7 +18,8 @@
 #define DEF_N_CHUNKS         20
 #define MAX_N_CHUNKS         (DEF_N_CHUNKS * 10)
 #define DEF_LOG_PATH         "./speedy.log"
-#define DEF_DATA_DIR         ""
+#define DEF_SERVER_ADDR      "127.0.0.1"
+#define DEF_DATA_DIR         "./"
 #define DEF_DAEMONIZE        0
 #define DEF_SERVER_PORT      8000
 #define DEF_LOG_LEVEL        INFO

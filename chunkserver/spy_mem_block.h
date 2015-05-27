@@ -9,8 +9,8 @@
 // for simple, every memory block has the same size
 #define MEM_BLOCK_SIZE  (1 << 20)		// 1M
 #define PREALLOC_COUNT  16
-#define DEFAULT_MEM_BLOCKS_LIMIT 1024	// 1G
-#define MAX_MEM_BLOCKS_LIMIT (DEFAULT_MEM_BLOCKS_LIMIT * 5)
+#define DEF_MEM_BLOCKS_LIMIT 1024	// 1G
+#define MAX_MEM_BLOCKS_LIMIT (DEF_MEM_BLOCKS_LIMIT * 5)
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
