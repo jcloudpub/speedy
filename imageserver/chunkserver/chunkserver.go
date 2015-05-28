@@ -38,6 +38,7 @@ var (
 	PUT uint8 = 0x00
 	GET uint8 = 0x01
 	DELETE uint8 = 0x02
+	PING uint8 = 0x0A
 )
 
 func (csgs *ChunkServerGroups) GetChunkServerGroup(groupId string) ([]ChunkServer, bool) {
@@ -47,6 +48,29 @@ func (csgs *ChunkServerGroups) GetChunkServerGroup(groupId string) ([]ChunkServe
 
 func (csi *ChunkServer) HostInfoEqual(another *ChunkServer) bool {
 	return csi.Ip == another.Ip && csi.Port == another.Port
+}
+
+func (cs *ChunkServer) Ping(conn *PooledConn) error {
+	output := new(bytes.Buffer)
+	header := make([]byte, 6)
+	binary.Write(output, binary.BigEndian, PING)
+	binary.Write(output, binary.BigEndian, uint32(0))
+
+	_, err := conn.Write(output.Bytes())
+	if err != nil {
+		return err
+	}
+
+	_, err = io.ReadFull(conn.br, header)
+	if err != nil {
+		return err
+	}
+
+	if header[0] != PING || header[1] != 0 {
+		return fmt.Errorf("ping %s:%d error, header[0]:%d, header[1]:%d", cs.Ip, cs.Port, uint8(header[0]), uint8(header[1]))
+	}
+
+	return nil
 }
 
 func (cs *ChunkServer) PutData(data []byte, conn *PooledConn, fileId uint64) error {
@@ -90,7 +114,7 @@ func (cs *ChunkServer) GetData(miv *meta.MetaInfoValue, conn *PooledConn) ([]byt
 	binary.Write(output, binary.BigEndian, uint16(miv.GroupId))
 	binary.Write(output, binary.BigEndian, uint64(miv.FileId))
 
-	_, err := conn.Conn.Write(output.Bytes())
+	_, err := conn.Write(output.Bytes())
 	if err != nil {
 		fmt.Errorf("write socket error %s\n", err)
 		return nil, err

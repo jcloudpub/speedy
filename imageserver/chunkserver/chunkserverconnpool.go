@@ -33,6 +33,25 @@ func (cscp *ChunkServerConnectionPool) GetConn(chunkserver *ChunkServer) (PoolCo
 	return pool.Get()
 }
 
+//chunkserver closed, the state of connection in pool is close_wait, need to close those connection
+func (cscp *ChunkServerConnectionPool) CheckConnPool(chunkserver *ChunkServer) error {
+	for {
+		conn, err := cscp.GetConn(chunkserver)
+		if err != nil {
+			return err
+		}
+
+		err = chunkserver.Ping(conn.(*PooledConn))
+		if err != nil {
+			conn.Close()
+			cscp.ReleaseConn(conn)
+			continue
+		}
+
+		return nil
+	}
+}
+
 func (cscp *ChunkServerConnectionPool) ReleaseConn(pc PoolConnection) {
 	pc.Recycle()
 }

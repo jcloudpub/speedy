@@ -230,9 +230,9 @@ func (s *Server) getFileInfo(w http.ResponseWriter, r *http.Request) {
 
     result, err := s.metaDriver.GetFileMetaInfo(path, false)
     if err != nil {
-    	log.Errorf("getFileInfo get metainfo error, key: %s, error: %s", path, err)
-    	s.responseResult(nil, http.StatusInternalServerError, err, w)
-    	return
+		log.Errorf("getFileInfo get metainfo error, key: %s, error: %s", path, err)
+		s.responseResult(nil, http.StatusInternalServerError, err, w)
+		return
     }
 
     if len(result) == 0 {
@@ -285,6 +285,16 @@ func (s *Server) getDirectoryInfo(w http.ResponseWriter, r *http.Request) {
 	log.Infof("[getDirectoryInfo] success, directory: %s, result: %s", path, string(jsonResult))
 	s.responseResult(jsonResult, http.StatusOK , nil, w)
 }
+
+func (s *Server) checkErrorAndConnPool(err error, chunkServer *chunkserver.ChunkServer, connPools *chunkserver.ChunkServerConnectionPool) {
+	if "EOF" == err.Error() {
+		err := connPools.CheckConnPool(chunkServer)
+		if err != nil {
+			log.Errorf("CheckConnPool error: %v", err)
+		}
+	}
+}
+
 
 func (s *Server) downloadFile(w http.ResponseWriter, r *http.Request) {
 	header := r.Header
@@ -339,6 +349,7 @@ func (s *Server) downloadFile(w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 		connPools.ReleaseConn(conn)
 		s.responseResult(nil, http.StatusInternalServerError, err, w)
+		s.checkErrorAndConnPool(err, chunkServer, connPools)
 		return
 	}
 
@@ -475,6 +486,7 @@ func (s *Server) postFileConcurrence(chunkServer *chunkserver.ChunkServer, data 
 		conn.Close()
 		s.connectionPools.ReleaseConn(conn)
 		c <- err.Error()
+		s.checkErrorAndConnPool(err, chunkServer, connPools)
 		return
 	}
 
