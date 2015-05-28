@@ -1368,9 +1368,9 @@ int main(int argc, char **argv)
 
 	spy_log(INFO, "server starting...");
 
-	spy_create_or_recover_files(config.data_dir);
-
 	spy_setup_listen_events();
+
+	spy_create_or_recover_files(config.data_dir);
 
 	spy_setup_work_queue();
 
