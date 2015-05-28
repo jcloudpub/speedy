@@ -1,7 +1,7 @@
 Introduction
 ============
 
-Speedy is a high performance distributed docker image storage solution written by go/c. It can be easily scaled out by adding more storage instance and no data have to move around between storage instance.It is also production ready and used by [jcloud.com](http://jcloud.com).
+Speedy is a high performance distributed docker image storage solution written by go/c. It can be easily scaled out by adding more storage instance and no data have to move around between storage instance.
 
 Features
 ============
@@ -18,7 +18,6 @@ Upcoming Features
 ============
 * Online data transfer system.
 * Docker registry 2.0 API support.
-* General object storage system interface like S3/Swift.
 * More operation tools.
 
 Architecture
@@ -45,7 +44,7 @@ while imageserver try to get file id, chunkmaster allocate a continuous range of
 It is a highly optimized storage engine for performance and space efficiency.It appends single small image file into large files and maintain file index in memory keeping the IO overhead to a minimum. Normally, a chunkserver group is consist of 3 chunkservers, imageserver writes data to a chunkserver group suceess means storing data to each chunkserver of the group success. 
 
 * metaserver        
-It is an another distributed key-value storage used by [jcloud.com](http://jcloud.com), since It's not open-source yet, you can use mysql instead which store the image layer metadata informations.
+It is an another distributed key-value storage, since It's not open-source yet, you can use mysql instead which store the image layer metadata informations.
 
 How To Install
 =============

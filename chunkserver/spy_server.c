@@ -1080,12 +1080,6 @@ static int spy_create_listen_socket(int port, char *bind_addr)
 		return -1;
 	}
 
-	if (listen(fd, 512)) {
-		spy_log(ERROR, "listen socket failed, error %s", strerror(errno));
-		close(fd);
-		return -1;
-	}
-
 	return fd;
 }
 
@@ -1109,17 +1103,16 @@ static void spy_setup_work_queue()
 	}
 }
 
-static void spy_setup_listen_events()
+static void spy_setup_listen_events(int listen_fd)
 {
 	int n;
-
-	server.listen_fd = spy_create_listen_socket(config.port, config.bind_addr);
-
-	if (server.listen_fd < 0) {
-		spy_log(ERROR, "create listen socket failed: %s", strerror(errno));
+	
+	if (listen(listen_fd, 512)) {
+		spy_log(ERROR, "listen socket failed, error %s", strerror(errno));
 		exit(1);
 	}
 
+	server.listen_fd  = listen_fd;
 	server.event_loop = spy_create_event_loop(DEF_MAX_CLIENTS);
 
 	if (!server.event_loop) {
@@ -1269,7 +1262,7 @@ void spy_check_server_options()
 
 int main(int argc, char **argv)
 {
-	int c, n;
+	int c, n, listen_fd;
 	char *p;
 
 	spy_signal_init();
@@ -1368,9 +1361,16 @@ int main(int argc, char **argv)
 
 	spy_log(INFO, "server starting...");
 
-	spy_setup_listen_events();
+	listen_fd = spy_create_listen_socket(config.port, config.bind_addr);
+
+	if (listen_fd < 0) {
+		spy_log(ERROR, "create listen socket failed: %s", strerror(errno));
+		exit(1);
+	}
 
 	spy_create_or_recover_files(config.data_dir);
+
+	spy_setup_listen_events(listen_fd);
 
 	spy_setup_work_queue();
 
