@@ -6,7 +6,7 @@ import (
 
 const (
 	UPDATE_FID_SQL = "UPDATE gen_fid SET fid = ? "
-	GET_FID_SQL = "SELECT fid FROM gen_fid"
+	GET_FID_SQL    = "SELECT fid FROM gen_fid"
 )
 
 func (conn *MySqlConn) UpdateFid(fid uint64) error {

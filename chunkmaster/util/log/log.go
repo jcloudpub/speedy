@@ -13,8 +13,8 @@ type priority int
 
 const (
 	RFC3339Nano string = "2006-01-02T15:04:05.000000000Z07:00"
-	errorFormat = "[%s] [%s] %s:%d %s\n"
-	logFormat   = "[%s] [%s] %s\n"
+	errorFormat        = "[%s] [%s] %s:%d %s\n"
+	logFormat          = "[%s] [%s] %s\n"
 
 	fatalPriority priority = iota
 	errorPriority

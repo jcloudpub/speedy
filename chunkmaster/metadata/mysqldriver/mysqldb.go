@@ -1,8 +1,8 @@
 package mysqldriver
 
 import (
-	"fmt"
 	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 )
 

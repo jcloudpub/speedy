@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	"github.com/jcloudpub/speedy/chunkmaster/metadata"
-	"github.com/jcloudpub/speedy/chunkmaster/util/log"
 	"github.com/jcloudpub/speedy/chunkmaster/metadata/mysqldriver"
+	"github.com/jcloudpub/speedy/chunkmaster/util/log"
 )
 
 var mdDriver metadata.MetaDataDriver
@@ -16,7 +16,7 @@ var serverInfo map[string]*metadata.Chunkserver //key[groupId:ip:port]--chunkser
 type Fid struct {
 	sync.Mutex
 	Begin uint64
-	End	  uint64
+	End   uint64
 }
 
 func InitAll(host, port, user, passwd, db string) {

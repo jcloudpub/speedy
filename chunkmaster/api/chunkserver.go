@@ -1,30 +1,29 @@
 package api
 
 import (
-	"fmt"
-	"net/http"
-	"io/ioutil"
-	"time"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/jcloudpub/speedy/chunkmaster/metadata"
 	"github.com/jcloudpub/speedy/chunkmaster/util"
 	"github.com/jcloudpub/speedy/chunkmaster/util/log"
-	"github.com/jcloudpub/speedy/chunkmaster/metadata"
 )
 
 const (
-	MAX_RANGE = 10000
+	MAX_RANGE      = 10000
 	ALLOCATE_RANGE = MAX_RANGE / 100
 
 	INIT_STATUS = 0
-	RW_STATUS = 1
-	RO_STATUS = 2
-	ERR_STATUS = 3
+	RW_STATUS   = 1
+	RO_STATUS   = 2
+	ERR_STATUS  = 3
 
-
-	GLOBAL_NORMAL_STATUS = 0
+	GLOBAL_NORMAL_STATUS  = 0
 	GLOBAL_TRANSFER_STAUS = 8
 )
 
@@ -32,8 +31,8 @@ func MonitorTicker(intervalSecond int, timeoutSecond int) {
 	timer := time.NewTicker(time.Duration(intervalSecond) * time.Second)
 	for {
 		select {
-			case <- timer.C:
-				chunkserverMonitor(timeoutSecond)
+		case <-timer.C:
+			chunkserverMonitor(timeoutSecond)
 		}
 	}
 }
@@ -41,7 +40,7 @@ func MonitorTicker(intervalSecond int, timeoutSecond int) {
 func chunkserverMonitor(timeoutSecond int) {
 	serverInfoAbnormal := make(map[string]*metadata.Chunkserver)
 	now := time.Now()
-	timeout := time.Duration(timeoutSecond)*time.Second
+	timeout := time.Duration(timeoutSecond) * time.Second
 
 	lock.RLock()
 
@@ -166,10 +165,10 @@ func reportChunkserverInfo(key string, chunkserver *metadata.Chunkserver, oldChu
 
 func initChunkserverHandler(resp http.ResponseWriter, req *http.Request) {
 	/*
-	if err := util.ContentTypeCheck(req); err != nil {
-		util.HandleError(resp, "", err, http.StatusBadRequest)
-		return;
-	}
+		if err := util.ContentTypeCheck(req); err != nil {
+			util.HandleError(resp, "", err, http.StatusBadRequest)
+			return;
+		}
 	*/
 	reqData, err := ioutil.ReadAll(req.Body)
 	defer req.Body.Close()
@@ -250,7 +249,7 @@ func loadChunkserverInfoHandler(resp http.ResponseWriter, req *http.Request) {
 
 func chunkserverGroupInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	groupIdStr, ok := vars["groupId"] 
+	groupIdStr, ok := vars["groupId"]
 	if !ok {
 		util.HandleError(resp, "", fmt.Errorf("groupId is empty"), http.StatusBadRequest)
 		return
@@ -258,7 +257,7 @@ func chunkserverGroupInfoHandler(resp http.ResponseWriter, req *http.Request) {
 
 	groupId, err := strconv.ParseInt(groupIdStr, 10, 0)
 	if err != nil {
-		util.HandleError(resp, "", err, http.StatusBadRequest) 
+		util.HandleError(resp, "", err, http.StatusBadRequest)
 		return
 	}
 
@@ -270,7 +269,7 @@ func chunkserverGroupInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	util.Response(result, http.StatusOK, resp)
 }
 
-func chunkserverGroupInfo(groupId int) ([]byte, error){
+func chunkserverGroupInfo(groupId int) ([]byte, error) {
 	chunkserverGroup, err := mdDriver.ListChunkserverGroup(groupId)
 	if err != nil {
 		return nil, err
@@ -281,7 +280,7 @@ func chunkserverGroupInfo(groupId int) ([]byte, error){
 		return nil, err
 	}
 
-	return chunkserverGroupJsonByte, nil 
+	return chunkserverGroupJsonByte, nil
 }
 
 func LoadChunkserverInfo() error {
@@ -335,7 +334,7 @@ func addChunkserver(chunkserver *metadata.Chunkserver) error {
 
 func batchAddChunkserver(chunkserverList *[]metadata.Chunkserver) error {
 	for _, chunkserver := range *chunkserverList {
-		err := addChunkserver(&chunkserver) 
+		err := addChunkserver(&chunkserver)
 		if err != nil {
 			return err
 		}
@@ -403,7 +402,7 @@ func chunkmasterFidHandler(resp http.ResponseWriter, req *http.Request) {
 
 	jsonMap := make(map[string]interface{})
 	jsonMap["FidBegin"] = fidBegin
-	jsonMap["FidEnd"]   = fidEnd
+	jsonMap["FidEnd"] = fidEnd
 	respData, err := util.EncodeJson(jsonMap)
 	if err != nil {
 		util.HandleError(resp, "", err, http.StatusInternalServerError)
@@ -421,7 +420,7 @@ func allocFid() (uint64, uint64, error) {
 	var (
 		fidBegin uint64
 		fidEnd   uint64
-		err error
+		err      error
 	)
 
 	if fid.Begin == fid.End {
@@ -440,8 +439,8 @@ func allocFid() (uint64, uint64, error) {
 		}
 	}
 
-	fidBegin  = fid.Begin
-	fidEnd    = fid.Begin + ALLOCATE_RANGE
+	fidBegin = fid.Begin
+	fidEnd = fid.Begin + ALLOCATE_RANGE
 	fid.Begin = fidEnd
 
 	return fidBegin, fidEnd, nil
