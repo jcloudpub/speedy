@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"strconv"
-	"runtime"
-	"os"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
 	"github.com/jcloudpub/speedy/imageserver/router"
+	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"os"
+	"runtime"
+	"strconv"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 	var metaPort = flag.Int("dp", 3306, "metadb port")
 	var userName = flag.String("u", "root", "metadb user")
 	var password = flag.String("pw", "", "metadb password")
-	var metadb = flag.String("db", "metadb", "meta database") 
+	var metadb = flag.String("db", "metadb", "meta database")
 	var debug = flag.Bool("D", false, "log debug level")
 
 	flag.Parse()

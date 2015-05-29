@@ -1,11 +1,11 @@
 package main
 
 import (
-	"os"
-	"strconv"
 	"flag"
-	"runtime"
 	"net/http"
+	"os"
+	"runtime"
+	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -47,7 +47,7 @@ func main() {
 	http.Handle("/", router)
 	log.Infof("listen %s:%d", *serverHost, *serverPort)
 
-	if err := http.ListenAndServe(*serverHost + ":"+ strconv.Itoa(*serverPort), nil); err != nil {
+	if err := http.ListenAndServe(*serverHost+":"+strconv.Itoa(*serverPort), nil); err != nil {
 		log.Errorf("listen err %v", err)
 		os.Exit(-1)
 	}

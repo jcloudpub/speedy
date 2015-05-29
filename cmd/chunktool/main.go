@@ -1,30 +1,31 @@
 package main
 
 import (
-	"runtime"
-	"flag"
-	"net"
-	"fmt"
-	"bytes"
-	"io"
-	"encoding/binary"
 	"bufio"
+	"bytes"
+	"encoding/binary"
+	"flag"
+	"fmt"
+	"io"
+	"net"
 	"os"
+	"runtime"
 )
 
 const (
-	opcodeWrite         =  0
-	opcodeRead          =  1
+	opcodeWrite = 0
+	opcodeRead  = 1
 
-	opcodeCheckDisk     = 11
+	opcodeCheckDisk = 11
 
-	opcodeSetStatus     =  20
-	opcodeGetStatus     =  21
+	opcodeSetStatus = 20
+	opcodeGetStatus = 21
 
-	opcodeKillPdWr      =  30
-	opcodeQueryIoStatus =  31
-	opcodeQeuryDetails  =  32
+	opcodeKillPdWr      = 30
+	opcodeQueryIoStatus = 31
+	opcodeQeuryDetails  = 32
 )
+
 /*
 const (
 	statusRW            =  0
@@ -34,13 +35,13 @@ const (
 */
 
 const (
-	QueryDetailHdrSize  =  68
+	QueryDetailHdrSize = 68
 )
 
 type SpyClient struct {
-	Conn     net.Conn
-	rb      *bufio.Reader
-} 
+	Conn net.Conn
+	rb   *bufio.Reader
+}
 
 func NewSpyClient(addr string) (*SpyClient, error) {
 	var err error
@@ -57,12 +58,12 @@ func NewSpyClient(addr string) (*SpyClient, error) {
 	return c, nil
 }
 
-func (c *SpyClient) upload(sid uint, fid uint64, data string) {	
+func (c *SpyClient) upload(sid uint, fid uint64, data string) {
 	output := new(bytes.Buffer)
 	header := make([]byte, 6)
 
 	binary.Write(output, binary.BigEndian, uint8(opcodeWrite))
-	binary.Write(output, binary.BigEndian, uint32(len(data) + 2 + 8))
+	binary.Write(output, binary.BigEndian, uint32(len(data)+2+8))
 	binary.Write(output, binary.BigEndian, uint16(sid))
 	binary.Write(output, binary.BigEndian, uint64(fid))
 
@@ -70,7 +71,7 @@ func (c *SpyClient) upload(sid uint, fid uint64, data string) {
 
 	_, err := c.Conn.Write(output.Bytes())
 
-	if (err != nil) {
+	if err != nil {
 		fmt.Printf("write socket error %s\n", err.Error())
 		return
 	}
@@ -92,13 +93,13 @@ func (c *SpyClient) download(sid uint, fid uint64, outFile string) {
 	header := make([]byte, 6)
 
 	binary.Write(output, binary.BigEndian, uint8(opcodeRead))
-	binary.Write(output, binary.BigEndian, uint32(2 + 8))
+	binary.Write(output, binary.BigEndian, uint32(2+8))
 	binary.Write(output, binary.BigEndian, uint16(sid))
 	binary.Write(output, binary.BigEndian, uint64(fid))
 
 	_, err := c.Conn.Write(output.Bytes())
 
-	if (err != nil) {
+	if err != nil {
 		fmt.Printf("write socket error %s\n", err.Error())
 		return
 	}
@@ -131,7 +132,7 @@ func (c *SpyClient) download(sid uint, fid uint64, outFile string) {
 		f.Write(data)
 	} else {
 		fmt.Printf("download file content: %s, len: %d\n", string(data), len(data))
-//		fmt.Printf("download file content: %x, len: %d\n", data, len(data))
+		//		fmt.Printf("download file content: %x, len: %d\n", data, len(data))
 	}
 }
 
@@ -144,7 +145,7 @@ func (c *SpyClient) getStatus(s uint) {
 	binary.Write(output, binary.BigEndian, uint32(0))
 
 	_, err := c.Conn.Write(output.Bytes())
-	if (err != nil) {
+	if err != nil {
 		fmt.Println("write socket error:", err)
 		return
 	}
@@ -184,7 +185,7 @@ func (c *SpyClient) setStatus(s uint, status uint32) {
 	binary.Write(output, binary.BigEndian, uint32(status))
 
 	_, err := c.Conn.Write(output.Bytes())
-	if (err != nil) {
+	if err != nil {
 		fmt.Println("write socket error:", err)
 		return
 	}
@@ -216,7 +217,7 @@ func (c *SpyClient) queryIoStatus(s uint) {
 	binary.Write(output, binary.BigEndian, uint32(0))
 
 	_, err := c.Conn.Write(output.Bytes())
-	if (err != nil) {
+	if err != nil {
 		fmt.Println("write socket error:", err)
 		return
 	}
@@ -246,7 +247,7 @@ func (c *SpyClient) queryIoStatus(s uint) {
 
 	pendingWrites := binary.BigEndian.Uint32(body)
 	writtingCount := binary.BigEndian.Uint32(body[4:8])
-	readingCount  := binary.BigEndian.Uint32(body[8:12])
+	readingCount := binary.BigEndian.Uint32(body[8:12])
 
 	fmt.Println("pendingWrites:", pendingWrites, "writingCount:", writtingCount, "readingCount:", readingCount)
 
@@ -262,7 +263,7 @@ func (c *SpyClient) killPendingWrites(s uint) {
 	binary.Write(output, binary.BigEndian, uint32(0))
 
 	_, err := c.Conn.Write(output.Bytes())
-	if (err != nil) {
+	if err != nil {
 		fmt.Println("write socket error:", err)
 		return
 	}
@@ -296,7 +297,7 @@ func (c *SpyClient) checkDisk(s uint) {
 	binary.Write(output, binary.BigEndian, uint32(0))
 
 	_, err := c.Conn.Write(output.Bytes())
-	if (err != nil) {
+	if err != nil {
 		fmt.Println("write socket error:", err)
 		return
 	}
@@ -324,13 +325,13 @@ func (c *SpyClient) checkDisk(s uint) {
 func (c *SpyClient) queryDetails(s uint) {
 	output := new(bytes.Buffer)
 
-//	fmt.Println("server id:", s)
+	//	fmt.Println("server id:", s)
 
 	binary.Write(output, binary.BigEndian, uint8(opcodeQeuryDetails))
 	binary.Write(output, binary.BigEndian, uint32(0))
 
 	_, err := c.Conn.Write(output.Bytes())
-	if (err != nil) {
+	if err != nil {
 		fmt.Println("write socket error:", err)
 		return
 	}
@@ -347,7 +348,7 @@ func (c *SpyClient) queryDetails(s uint) {
 	}
 
 	bodyLen := binary.BigEndian.Uint32(header[2:])
-	if (bodyLen < QueryDetailHdrSize) {
+	if bodyLen < QueryDetailHdrSize {
 		fmt.Println("invalid bodylen:", bodyLen)
 		return
 	}
@@ -359,17 +360,17 @@ func (c *SpyClient) queryDetails(s uint) {
 		return
 	}
 
-	conn_count     := binary.BigEndian.Uint32(infos[:4])
-	reading_count  := binary.BigEndian.Uint32(infos[4:8])
-	writing_count  := binary.BigEndian.Uint32(infos[8:12])
+	conn_count := binary.BigEndian.Uint32(infos[:4])
+	reading_count := binary.BigEndian.Uint32(infos[4:8])
+	writing_count := binary.BigEndian.Uint32(infos[8:12])
 	pending_writes := binary.BigEndian.Uint32(infos[12:16])
-	read_count     := binary.BigEndian.Uint64(infos[16:24])
-	write_count    := binary.BigEndian.Uint64(infos[24:32])
-	read_error     := binary.BigEndian.Uint64(infos[32:40])
-	write_error    := binary.BigEndian.Uint64(infos[40:48])
-	read_bytes     := binary.BigEndian.Uint64(infos[48:56])
-	write_bytes    := binary.BigEndian.Uint64(infos[56:64])
-	n_chunks       := binary.BigEndian.Uint32(infos[64:68])
+	read_count := binary.BigEndian.Uint64(infos[16:24])
+	write_count := binary.BigEndian.Uint64(infos[24:32])
+	read_error := binary.BigEndian.Uint64(infos[32:40])
+	write_error := binary.BigEndian.Uint64(infos[40:48])
+	read_bytes := binary.BigEndian.Uint64(infos[48:56])
+	write_bytes := binary.BigEndian.Uint64(infos[56:64])
+	n_chunks := binary.BigEndian.Uint32(infos[64:68])
 
 	var i uint32
 	chunk_infos := make([]uint64, n_chunks)
@@ -391,16 +392,16 @@ func (c *SpyClient) queryDetails(s uint) {
 	var total_space uint64
 	total_space = 0
 	for i, c := range chunk_infos {
-//		fmt.Println("chunk", i+1, "avail space:", c)
+		//		fmt.Println("chunk", i+1, "avail space:", c)
 
-		fmt.Println("chunk", i+1, "avail space:\t", c / (1 << 30), "G ", c % (1 << 30) / (1 << 20), "M ",
-					c % (1 << 20) / (1 << 10), "K ", c % (1 << 10), "bytes")
+		fmt.Println("chunk", i+1, "avail space:\t", c/(1<<30), "G ", c%(1<<30)/(1<<20), "M ",
+			c%(1<<20)/(1<<10), "K ", c%(1<<10), "bytes")
 
 		total_space += c
 	}
 
-	fmt.Println("total avail space:", total_space / (1 << 30), "G ", total_space % (1 << 30) / (1 << 20), "M ",
-				total_space % (1 << 20) / (1 << 10), "K ", total_space % (1 << 10), "bytes")
+	fmt.Println("total avail space:", total_space/(1<<30), "G ", total_space%(1<<30)/(1<<20), "M ",
+		total_space%(1<<20)/(1<<10), "K ", total_space%(1<<10), "bytes")
 
 	fmt.Println("========================================================================")
 
@@ -412,20 +413,20 @@ func main() {
 
 	var addr = flag.String("h", "127.0.0.1", "server addr")
 	var port = flag.String("p", "9999", "server port")
-	var sid  = flag.Uint("s", 1, "server id")
-	var fid  = flag.Uint64("f", 1, "fid")
+	var sid = flag.Uint("s", 1, "server id")
+	var fid = flag.Uint64("f", 1, "fid")
 	var data = flag.String("d", "test_data", "file data")
-	var cmd  = flag.String("c", "upload", "command")
+	var cmd = flag.String("c", "upload", "command")
 	var outFile = flag.String("o", "", "outFile")
-//	var status = flag.Uint("t", 0, "set status")
+	//	var status = flag.Uint("t", 0, "set status")
 
-	flag.Parse();
+	flag.Parse()
 
 	var serverAddr = *addr + ":" + *port
 
 	client, err := NewSpyClient(serverAddr)
-	if err != nil  {
-		fmt.Printf("client create failed\n");
+	if err != nil {
+		fmt.Printf("client create failed\n")
 		return
 	}
 
@@ -433,11 +434,11 @@ func main() {
 		client.upload(*sid, *fid, *data)
 	} else if *cmd == "download" {
 		client.download(*sid, *fid, *outFile)
-//	} else if *cmd == "getstatus" {
-//		fmt.Println("run get status")
-//		client.getStatus(*sid)
-//	} else if *cmd == "setstatus" {
-//		client.setStatus(*sid, uint32(*status))
+		//	} else if *cmd == "getstatus" {
+		//		fmt.Println("run get status")
+		//		client.getStatus(*sid)
+		//	} else if *cmd == "setstatus" {
+		//		client.setStatus(*sid, uint32(*status))
 	} else if *cmd == "queryiostatus" {
 		client.queryIoStatus(*sid)
 	} else if *cmd == "killpending" {
