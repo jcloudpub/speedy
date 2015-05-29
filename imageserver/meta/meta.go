@@ -1,8 +1,8 @@
 package meta
 
 const (
-	TAG = "tag_"
-	SPLIT = "/"
+	TAG       = "tag_"
+	SPLIT     = "/"
 	DIRECTORY = "DIRECTORY_"
 )
 
@@ -10,12 +10,12 @@ const (
 //groupId == 0 or fileId == 0
 //may cause error
 type MetaInfoValue struct {
-	Index     uint64
-	Start     uint64
-	End       uint64
-	GroupId   uint16 `json:",omitempty"`
-	FileId    uint64 `json:",omitempty"`
-	IsLast    bool
+	Index   uint64
+	Start   uint64
+	End     uint64
+	GroupId uint16 `json:",omitempty"`
+	FileId  uint64 `json:",omitempty"`
+	IsLast  bool
 }
 
 type MetaInfo struct {

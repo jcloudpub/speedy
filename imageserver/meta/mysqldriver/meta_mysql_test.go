@@ -1,11 +1,11 @@
 package mysqldriver
 
 import (
-	"testing"
 	"fmt"
-	"sync"
-	"time"
 	. "github.com/jcloudpub/speedy/imageserver/meta"
+	"sync"
+	"testing"
+	"time"
 )
 
 var metaDriver MetaDriver
@@ -80,7 +80,7 @@ func TestStoreMetaInfoPrefomance(t *testing.T) {
 	t.Log(stime)
 
 	ips := thdCount * execCount / (int(stime.Seconds()))
-	t.Log("threads ", thdCount, ", exec ", execCount, " total insert req ", thdCount * execCount)
+	t.Log("threads ", thdCount, ", exec ", execCount, " total insert req ", thdCount*execCount)
 	t.Log("insert per seconds. ", ips)
 }
 

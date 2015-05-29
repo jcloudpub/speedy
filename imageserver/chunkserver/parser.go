@@ -2,15 +2,15 @@ package chunkserver
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"io"
-	"encoding/binary"
-	"bytes"
 )
 
 type Resp struct {
 	Type int8
-	Len int32
+	Len  int32
 	Data []byte
 }
 
@@ -49,7 +49,7 @@ func ReadHeader(r *bufio.Reader) (*Resp, error) {
 
 	resp := &Resp{
 		Type: t,
-		Len: len,
+		Len:  len,
 		Data: data,
 	}
 

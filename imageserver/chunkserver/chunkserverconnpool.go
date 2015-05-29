@@ -1,22 +1,21 @@
 package chunkserver
 
-
 import (
-	"sync"
 	"fmt"
-	"time"
 	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"sync"
+	"time"
 )
 
 type ChunkServerConnectionPool struct {
-	mu sync.Mutex
-	Pools map[string]*ConnectionPool// <ip:port>:connectionpool
+	mu    sync.Mutex
+	Pools map[string]*ConnectionPool // <ip:port>:connectionpool
 }
 
 func NewChunkServerConnectionPool() *ChunkServerConnectionPool {
-	return &ChunkServerConnectionPool {
-		mu: sync.Mutex{},
-		Pools : make(map[string]*ConnectionPool),
+	return &ChunkServerConnectionPool{
+		mu:    sync.Mutex{},
+		Pools: make(map[string]*ConnectionPool),
 	}
 }
 
@@ -116,10 +115,10 @@ func (cscp *ChunkServerConnectionPool) RemoveAndClosePool(chunkserver *ChunkServ
 		return fmt.Errorf("pool %s not exist", key)
 	}
 
-	delete (cscp.Pools, key)
+	delete(cscp.Pools, key)
 
 	cscp.mu.Unlock()
 
-	pool.Close()//TODO async close
+	pool.Close() //TODO async close
 	return nil
 }

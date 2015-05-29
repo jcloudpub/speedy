@@ -1,32 +1,32 @@
 package chunkserver
 
 import (
-	"io"
-	"fmt"
-	"encoding/binary"
 	"bytes"
+	"encoding/binary"
+	"fmt"
 	"github.com/jcloudpub/speedy/imageserver/meta"
 	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"io"
 )
 
 const (
-	RW_STATUS = 1
-	RO_STATUS = 2
+	RW_STATUS  = 1
+	RO_STATUS  = 2
 	ERR_STATUS = 3
 
 	GLOBAL_NORMAL_STATUS = 0
-	GLOBAL_READ_STAUS = 8
+	GLOBAL_READ_STAUS    = 8
 )
 
 type ChunkServer struct {
-	GroupId int32
-	Ip string
-	Port int64
-	Status int8
+	GroupId        int32
+	Ip             string
+	Port           int64
+	Status         int8
 	GlobalStatus   int8
 	TotalFreeSpace int64
-	MaxFreeSpace int64
-	PendingWrites	int
+	MaxFreeSpace   int64
+	PendingWrites  int
 	WritingCount   int
 }
 
@@ -35,10 +35,10 @@ type ChunkServerGroups struct {
 }
 
 var (
-	PUT uint8 = 0x00
-	GET uint8 = 0x01
+	PUT    uint8 = 0x00
+	GET    uint8 = 0x01
 	DELETE uint8 = 0x02
-	PING uint8 = 0x0A
+	PING   uint8 = 0x0A
 )
 
 func (csgs *ChunkServerGroups) GetChunkServerGroup(groupId string) ([]ChunkServer, bool) {
@@ -78,7 +78,7 @@ func (cs *ChunkServer) PutData(data []byte, conn *PooledConn, fileId uint64) err
 	header := make([]byte, HEADERSIZE)
 
 	binary.Write(output, binary.BigEndian, PUT)
-	binary.Write(output, binary.BigEndian, uint32(len(data) + 2 + 8))
+	binary.Write(output, binary.BigEndian, uint32(len(data)+2+8))
 	binary.Write(output, binary.BigEndian, uint16(cs.GroupId))
 	binary.Write(output, binary.BigEndian, uint64(fileId))
 
@@ -159,7 +159,7 @@ func parseUint32(data []byte) (uint32, error) {
 	return x, nil
 }
 
-func parseUint8(data []byte)(uint8, error) {
+func parseUint8(data []byte) (uint8, error) {
 	buf := bytes.NewBuffer(data)
 	var x uint8
 	err := binary.Read(buf, binary.BigEndian, &x)

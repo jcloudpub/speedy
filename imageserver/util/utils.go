@@ -1,10 +1,10 @@
 package util
 
 import (
-	"net/http"
+	"encoding/json"
 	"io"
 	"io/ioutil"
-	"encoding/json"
+	"net/http"
 )
 
 func Call(method, baseUrl, path string, body io.Reader, headers map[string][]string) ([]byte, int, error) {
@@ -37,7 +37,7 @@ func Call(method, baseUrl, path string, body io.Reader, headers map[string][]str
 	return dataBody, resp.StatusCode, nil
 }
 
-func GetRequestJsonParam(r *http.Request) (map[string]interface {}, error) {
+func GetRequestJsonParam(r *http.Request) (map[string]interface{}, error) {
 	data, err := ioutil.ReadAll(r.Body)
 
 	defer r.Body.Close()
@@ -55,8 +55,8 @@ func GetRequestJsonParam(r *http.Request) (map[string]interface {}, error) {
 	return m, nil
 }
 
-func DecodeJson(data []byte) (map[string]interface {}, error) {
-	var m map[string]interface {}
+func DecodeJson(data []byte) (map[string]interface{}, error) {
+	var m map[string]interface{}
 
 	err := json.Unmarshal(data, &m)
 

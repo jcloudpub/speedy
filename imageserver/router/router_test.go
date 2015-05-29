@@ -1,12 +1,11 @@
 package router
 
-
 import (
-	"testing"
+	"bytes"
 	"github.com/jcloudpub/speedy/imageserver/util"
 	"net/http"
-	"bytes"
 	"sync"
+	"testing"
 )
 
 var (
