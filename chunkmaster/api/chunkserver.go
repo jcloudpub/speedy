@@ -164,12 +164,6 @@ func reportChunkserverInfo(key string, chunkserver *metadata.Chunkserver, oldChu
 }
 
 func initChunkserverHandler(resp http.ResponseWriter, req *http.Request) {
-	/*
-		if err := util.ContentTypeCheck(req); err != nil {
-			util.HandleError(resp, "", err, http.StatusBadRequest)
-			return;
-		}
-	*/
 	reqData, err := ioutil.ReadAll(req.Body)
 	defer req.Body.Close()
 	if err != nil {
