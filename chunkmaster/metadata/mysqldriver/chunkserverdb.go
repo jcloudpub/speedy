@@ -3,7 +3,7 @@ package mysqldriver
 import (
 	"fmt"
 	"github.com/jcloudpub/speedy/chunkmaster/metadata"
-	"github.com/jcloudpub/speedy/chunkmaster/util"
+	"github.com/jcloudpub/speedy/utils"
 )
 
 const (

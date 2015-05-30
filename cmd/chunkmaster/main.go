@@ -2,16 +2,14 @@ package main
 
 import (
 	"flag"
+	"github.com/gorilla/mux"
+	"github.com/jcloudpub/speedy/chunkmaster/api"
+	"github.com/jcloudpub/speedy/logs"
+	"github.com/jcloudpub/speedy/utils"
 	"net/http"
 	"os"
 	"runtime"
 	"strconv"
-
-	"github.com/gorilla/mux"
-
-	"github.com/jcloudpub/speedy/chunkmaster/api"
-	"github.com/jcloudpub/speedy/chunkmaster/util"
-	"github.com/jcloudpub/speedy/chunkmaster/util/log"
 )
 
 func main() {

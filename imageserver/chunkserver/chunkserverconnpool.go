@@ -2,7 +2,7 @@ package chunkserver
 
 import (
 	"fmt"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"github.com/jcloudpub/speedy/logs"
 	"sync"
 	"time"
 )

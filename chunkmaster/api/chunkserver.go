@@ -3,15 +3,14 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/jcloudpub/speedy/chunkmaster/metadata"
+	"github.com/jcloudpub/speedy/logs"
+	"github.com/jcloudpub/speedy/utils"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/gorilla/mux"
-	"github.com/jcloudpub/speedy/chunkmaster/metadata"
-	"github.com/jcloudpub/speedy/chunkmaster/util"
-	"github.com/jcloudpub/speedy/chunkmaster/util/log"
 )
 
 const (

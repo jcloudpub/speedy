@@ -3,7 +3,7 @@ package chunkserver
 import (
 	"errors"
 	"github.com/jcloudpub/speedy/imageserver/pools"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"github.com/jcloudpub/speedy/logs"
 	"sync"
 	"time"
 )

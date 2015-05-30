@@ -1,7 +1,7 @@
 package metadata
 
 import (
-	"github.com/jcloudpub/speedy/chunkmaster/util"
+	"github.com/jcloudpub/speedy/utils"
 	"time"
 )
 

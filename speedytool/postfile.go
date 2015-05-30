@@ -3,8 +3,8 @@ package speedytool
 import (
 	"bytes"
 	"fmt"
-	"github.com/jcloudpub/speedy/imageserver/util"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"github.com/jcloudpub/speedy/logs"
+	"github.com/jcloudpub/speedy/utils"
 	"net/http"
 	"os"
 	"strconv"

@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/jcloudpub/speedy/chunkmaster/util/log"
+	"github.com/jcloudpub/speedy/logs"
 )
 
 func EncodeJson(data interface{}) ([]byte, error) {

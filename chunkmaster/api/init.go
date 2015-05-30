@@ -1,11 +1,10 @@
 package api
 
 import (
-	"sync"
-
 	"github.com/jcloudpub/speedy/chunkmaster/metadata"
 	"github.com/jcloudpub/speedy/chunkmaster/metadata/mysqldriver"
-	"github.com/jcloudpub/speedy/chunkmaster/util/log"
+	"github.com/jcloudpub/speedy/logs"
+	"sync"
 )
 
 var mdDriver metadata.MetaDataDriver

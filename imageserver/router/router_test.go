@@ -2,7 +2,7 @@ package router
 
 import (
 	"bytes"
-	"github.com/jcloudpub/speedy/imageserver/util"
+	"github.com/jcloudpub/speedy/utils"
 	"net/http"
 	"sync"
 	"testing"

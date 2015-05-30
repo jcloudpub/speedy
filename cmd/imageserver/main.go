@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/jcloudpub/speedy/imageserver/router"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"github.com/jcloudpub/speedy/logs"
 	"os"
 	"runtime"
 	"strconv"

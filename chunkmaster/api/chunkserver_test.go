@@ -2,7 +2,7 @@ package api
 
 import (
 	"bytes"
-	"github.com/jcloudpub/speedy/chunkmaster/util"
+	"github.com/jcloudpub/speedy/utils"
 	"net/http"
 	"testing"
 )
