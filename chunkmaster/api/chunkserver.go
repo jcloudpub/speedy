@@ -89,7 +89,8 @@ func reportChunkserverInfoHandler(resp http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 
 	log.Debugf("[reportChunkserverInfoHandler] reqData: %v", string(reqData))
-	jsonMap, err := util.DecodeJson(reqData)
+	var jsonMap map[string]interface{}
+	err = json.Unmarshal(reqData, &jsonMap)
 	if err != nil {
 		util.HandleError(resp, "", err, http.StatusBadRequest)
 		return
@@ -171,7 +172,8 @@ func initChunkserverHandler(resp http.ResponseWriter, req *http.Request) {
 	}
 	log.Infof("[initserverHandler] read reqData %v", string(reqData))
 
-	jsonMap, err := util.DecodeJson(reqData)
+	var jsonMap map[string]interface{}
+	err = json.Unmarshal(reqData, &jsonMap)
 	if err != nil {
 		util.HandleError(resp, "", err, http.StatusBadRequest)
 		return
@@ -375,7 +377,7 @@ func chunkmasterRouteHandler(resp http.ResponseWriter, req *http.Request) {
 
 	lock.RUnlock()
 
-	respData, err := util.EncodeJson(chunkserverGroup)
+	respData, err := json.Marshal(chunkserverGroup)
 	if err != nil {
 		util.HandleError(resp, "", err, http.StatusInternalServerError)
 		return
@@ -396,7 +398,7 @@ func chunkmasterFidHandler(resp http.ResponseWriter, req *http.Request) {
 	jsonMap := make(map[string]interface{})
 	jsonMap["FidBegin"] = fidBegin
 	jsonMap["FidEnd"] = fidEnd
-	respData, err := util.EncodeJson(jsonMap)
+	respData, err := json.Marshal(jsonMap)
 	if err != nil {
 		util.HandleError(resp, "", err, http.StatusInternalServerError)
 		return

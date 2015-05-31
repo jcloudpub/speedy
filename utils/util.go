@@ -3,33 +3,14 @@ package util
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
+	"github.com/jcloudpub/speedy/logs"
 	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"strconv"
-
-	"github.com/jcloudpub/speedy/logs"
 )
-
-func EncodeJson(data interface{}) ([]byte, error) {
-	body, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
-}
-
-func DecodeJson(data []byte) (map[string]interface{}, error) {
-	var m map[string]interface{}
-	err := json.Unmarshal(data, &m)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
-}
 
 func Call(method, baseUrl, path string, body io.Reader, headers map[string][]string) ([]byte, int, error) {
 	client := &http.Client{}
