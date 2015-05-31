@@ -35,7 +35,7 @@ func main() {
 
 	err := api.LoadChunkserverInfo()
 	if err != nil {
-		log.Fatal("loadChunkserverInfo error: %v", err)
+		log.Fatalf("loadChunkserverInfo error: %v", err)
 	}
 
 	go api.MonitorTicker(5, 30)
@@ -45,7 +45,7 @@ func main() {
 	log.Infof("listen %s:%d", *serverHost, *serverPort)
 
 	if err := http.ListenAndServe(*serverHost+":"+strconv.Itoa(*serverPort), nil); err != nil {
-		log.Fatal("listen error: %v", err)
+		log.Fatalf("listen error: %v", err)
 	}
 }
 
