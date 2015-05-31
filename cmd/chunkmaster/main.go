@@ -30,13 +30,12 @@ func main() {
 
 	//set log debug level
 	if *debug {
-		setLogDebugLevel()
+		os.Setenv("DEBUG", "DEBUG")
 	}
 
 	err := api.LoadChunkserverInfo()
 	if err != nil {
-		log.Errorf("loadChunkserverInfo error: %v", err)
-		os.Exit(-1)
+		log.Fatal("loadChunkserverInfo error: %v", err)
 	}
 
 	go api.MonitorTicker(5, 30)
@@ -46,8 +45,7 @@ func main() {
 	log.Infof("listen %s:%d", *serverHost, *serverPort)
 
 	if err := http.ListenAndServe(*serverHost+":"+strconv.Itoa(*serverPort), nil); err != nil {
-		log.Errorf("listen err %v", err)
-		os.Exit(-1)
+		log.Fatal("listen error: %v", err)
 	}
 }
 
@@ -67,8 +65,4 @@ func initRouter() *mux.Router {
 
 	router.NotFoundHandler = http.HandlerFunc(util.NotFoundHandle)
 	return router
-}
-
-func setLogDebugLevel() {
-	os.Setenv("DEBUG", "DEBUG")
 }

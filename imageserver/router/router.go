@@ -13,7 +13,6 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
-	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -877,14 +876,12 @@ func (s *Server) Run() error {
 	s.initApi()
 	err := s.GetChunkServerInfo()
 	if err != nil {
-		log.Errorf("GetChunkServerInfo error: %s", err)
-		os.Exit(1)
+		log.Fatal("GetChunkServerInfo error: %s", err)
 	}
 
 	err = s.GetFidRange(false)
 	if err != nil {
-		log.Errorf("GetFidRange error: %s", err)
-		os.Exit(1)
+		log.Fatal("GetFidRange error: %s", err)
 	}
 
 	go s.GetFidRangeTicker()
@@ -892,8 +889,7 @@ func (s *Server) Run() error {
 
 	err = mysqldriver.InitMeta(s.metadbIp, s.metadbPort, s.metadbUser, s.metadbPassword, s.metaDatabase)
 	if err != nil {
-		log.Errorf("connect metadb error: %v", err)
-		os.Exit(1)
+		log.Fatal("Connect metadb error: %v", err)
 	}
 
 	s.metaDriver = new(mysqldriver.MysqlDriver)
