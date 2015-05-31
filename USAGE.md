@@ -76,6 +76,7 @@ imageserver is a stateless frond-end proxy server designed to provide restful ap
 $ ./imageserver --help
 Usage of ./imageserver:
   -D=false: log debug level
+  -c=200: the capacity of every chunkserver's connection pool
   -db="metadb": meta database
   -dh="127.0.0.1": metadb ip
   -dp=3306: metadb port
@@ -89,6 +90,7 @@ Usage of ./imageserver:
 
 options:
 -D		set -D=true log level is set to debug, default log level is info
+-c		set the capacity of chunkserver's connection pool
 -db		set the database of meta(instead of metaserver), defalut database is metadb
 -db		set the ip of meta database(metaserver ip), default is 127.0.0.1
 -dp		set the port of meta database(metaserver port), default is 3306
