@@ -707,7 +707,6 @@ func (s *Server) GetFidRange(mergeWait bool) error {
 		return err
 	}
 
-	log.Infof("get new fid: %s", newFids)
 	s.fids.Merge(newFids.Start, newFids.End, mergeWait)
 	return nil
 }
@@ -734,9 +733,6 @@ func (s *Server) handleChunkServerInfo(infos map[string][]chunkserver.ChunkServe
 		return
 	}
 
-	log.Infof("len(delServers): %d, delServers: %v", len(delServers), delServers)
-	log.Infof("len(addServers): %d, addServers: %v", len(addServers), addServers)
-
 	oldConnectionPool := s.GetConnectionPools()
 	newConnectionPool := chunkserver.NewChunkServerConnectionPool()
 
@@ -748,21 +744,24 @@ func (s *Server) handleChunkServerInfo(infos map[string][]chunkserver.ChunkServe
 	}
 
 	if len(delServers) != 0 {
-		log.Infof("handleChunkServerInfo deleteServers: %s", delServers)
+		log.Infof("len(delServers): %d", len(delServers))
 		for index := 0; index < len(delServers); index++ {
+			log.Infof("delete chunkserver: %v", delServers[index])
 			newConnectionPool.RemovePool(delServers[index])
 		}
 	}
 
 	if len(addServers) != 0 {
-		log.Infof("handleChunkServerInfo addServes: %s", addServers)
+		log.Infof("len(addServers): %d", len(addServers))
 		for index := 0; index < len(addServers); index++ {
+			log.Infof("add chunkserver: %v", addServers[index])
 			newConnectionPool.AddPool(addServers[index], s.connPoolCapacity)
 		}
 	}
 
-	log.Infof("newConnectionPool: %v", newConnectionPool)
-	log.Infof("newChunkServerGroups: %v", newChunkServerGroups)
+	//log.Infof("newConnectionPool: %v", newConnectionPool)
+	//log.Infof("newChunkServerGroups: %v", newChunkServerGroups)
+	newChunkServerGroups.Print()
 
 	s.ReplaceConnPoolsAndChunkServerGroups(newConnectionPool, newChunkServerGroups)
 

@@ -46,6 +46,18 @@ func (csgs *ChunkServerGroups) GetChunkServerGroup(groupId string) ([]ChunkServe
 	return group, ok
 }
 
+func (csgs *ChunkServerGroups) Print() {
+	for key, chunkserverArr := range csgs.GroupMap {
+		if len(chunkserverArr) != 0 {
+			log.Infof("========== groupId: %s ========== ", key)
+			for _, chunkserver := range chunkserverArr {
+				log.Infof("%v", chunkserver)
+			}
+			//log.Infof("================================= ")
+		}
+	}
+}
+
 func (csi *ChunkServer) HostInfoEqual(another *ChunkServer) bool {
 	return csi.Ip == another.Ip && csi.Port == another.Port
 }
