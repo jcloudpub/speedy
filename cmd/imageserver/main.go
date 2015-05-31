@@ -32,10 +32,7 @@ func main() {
 	}
 
 	var masterUrl = "http://" + *masterIp + ":" + strconv.Itoa(*masterPort)
-	var imageServerAddr = *host + ":" + strconv.Itoa(*port)
 	log.Infof("master URL: %s", masterUrl)
-	log.Infof("listen: %s", imageServerAddr)
-
 	log.Infof("the limit num of available chunkserver: %d", *limitNum)
 
 	server := router.NewServer(masterUrl, *host, *port, *limitNum, *metaIp, *metaPort, *userName, *password, *metadb, *connPoolCapacity)

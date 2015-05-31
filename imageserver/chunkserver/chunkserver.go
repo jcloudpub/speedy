@@ -53,7 +53,6 @@ func (csgs *ChunkServerGroups) Print() {
 			for _, chunkserver := range chunkserverArr {
 				log.Infof("%v", chunkserver)
 			}
-			//log.Infof("================================= ")
 		}
 	}
 }

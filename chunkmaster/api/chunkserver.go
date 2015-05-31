@@ -280,7 +280,6 @@ func chunkserverGroupInfo(groupId int) ([]byte, error) {
 
 func LoadChunkserverInfo() error {
 	chunkserverList, err := mdDriver.ListChunkserver()
-	log.Infof("[LoadChunkserverInfo] chunkserverList: %v", chunkserverList)
 	if err != nil {
 		return err
 	}
@@ -294,7 +293,7 @@ func LoadChunkserverInfo() error {
 		key := fmt.Sprintf("%d:%s:%d", server.GroupId, server.Ip, server.Port)
 		server.UpdateTime = now
 		serverInfoTemp[key] = server
-		log.Infof("[loadChunkserverInfo] server: %v", server)
+		log.Infof("[loadChunkserverInfo] chunkserver: %v", server)
 	}
 
 	lock.Lock()

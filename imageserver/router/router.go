@@ -231,13 +231,13 @@ func (s *Server) getFileInfo(w http.ResponseWriter, r *http.Request) {
 
 	result, err := s.metaDriver.GetFileMetaInfo(path, false)
 	if err != nil {
-		log.Errorf("getFileInfo get metainfo error, key: %s, error: %s", path, err)
+		log.Errorf("[getFileInfo] get metainfo error, key: %s, error: %s", path, err)
 		s.responseResult(nil, http.StatusInternalServerError, err, w)
 		return
 	}
 
 	if len(result) == 0 {
-		log.Infof("getFileInfo metainfo not exists, key: %s", path)
+		log.Infof("[getFileInfo] metainfo not exists, key: %s", path)
 		s.responseResult(nil, http.StatusNotFound, err, w)
 		return
 	}
@@ -895,6 +895,6 @@ func (s *Server) Run() error {
 	s.metaDriver = new(mysqldriver.MysqlDriver)
 
 	http.Handle("/", s.router)
-	log.Infof("listen: %v", s.Port)
+	log.Infof("listen: %s:%d", s.Ip, s.Port)
 	return http.ListenAndServe(s.Ip+":"+strconv.Itoa(s.Port), nil)
 }
