@@ -23,6 +23,7 @@ func main() {
 	var password = flag.String("pw", "", "metadb password")
 	var metadb = flag.String("db", "metadb", "meta database")
 	var debug = flag.Bool("D", false, "log debug level")
+	var connPoolCapacity = flag.Int("c", 200, "the capacity of every chunkserver's connection pool")
 
 	flag.Parse()
 
@@ -37,7 +38,7 @@ func main() {
 
 	log.Infof("the limit num of available chunkserver: %d", *limitNum)
 
-	server := router.NewServer(masterUrl, *host, *port, *limitNum, *metaIp, *metaPort, *userName, *password, *metadb)
+	server := router.NewServer(masterUrl, *host, *port, *limitNum, *metaIp, *metaPort, *userName, *password, *metadb, *connPoolCapacity)
 	log.Infof("imageserver start...")
 	err := server.Run()
 	if err != nil {

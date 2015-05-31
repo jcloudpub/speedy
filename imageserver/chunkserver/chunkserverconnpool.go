@@ -55,7 +55,7 @@ func (cscp *ChunkServerConnectionPool) ReleaseConn(pc PoolConnection) {
 	pc.Recycle()
 }
 
-func (cscp *ChunkServerConnectionPool) AddPool(chunkserver *ChunkServer) error {
+func (cscp *ChunkServerConnectionPool) AddPool(chunkserver *ChunkServer, capacity int) error {
 	cscp.mu.Lock()
 	defer cscp.mu.Unlock()
 
@@ -68,7 +68,7 @@ func (cscp *ChunkServerConnectionPool) AddPool(chunkserver *ChunkServer) error {
 		return nil
 	}
 
-	pool = NewConnectionPool("chunk server connection pool", 200, 3600*time.Second)
+	pool = NewConnectionPool("chunk server connection pool", capacity, 3600*time.Second)
 
 	log.Debugf("ChunkServerConnectionPool try to open ")
 	pool.Open(ConnectionCreator(key))

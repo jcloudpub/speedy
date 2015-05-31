@@ -29,7 +29,7 @@ const (
 )
 
 type Server struct {
-	MasterUrl         string
+	masterUrl         string
 	Ip                string
 	Port              int
 	router            *mux.Router
@@ -40,6 +40,7 @@ type Server struct {
 	connectionPools   *chunkserver.ChunkServerConnectionPool //{"host:port":connectionPool}
 	metaDriver        meta.MetaDriver
 	limitNum          int
+	connPoolCapacity  int
 	getFidRetryCount  int32
 	metadbIp          string
 	metadbPort        int
@@ -48,15 +49,16 @@ type Server struct {
 	metaDatabase      string
 }
 
-func NewServer(masterUrl, ip string, port int, num int, metadbIp string, metadbPort int, metadbUser, metadbPassword, metaDatabase string) *Server {
+func NewServer(masterUrl, ip string, port int, num int, metadbIp string, metadbPort int, metadbUser, metadbPassword, metaDatabase string, connPoolCapacity int) *Server {
 	return &Server{
-		MasterUrl:         masterUrl,
+		masterUrl:         masterUrl,
 		Ip:                ip,
 		Port:              port,
 		fids:              chunkserver.NewFids(),
 		chunkServerGroups: nil,
 		connectionPools:   nil,
 		limitNum:          num,
+		connPoolCapacity:  connPoolCapacity,
 		getFidRetryCount:  0,
 		metadbIp:          metadbIp,
 		metadbPort:        metadbPort,
@@ -658,10 +660,9 @@ func (s *Server) selectChunkServerGroupComplex(size int64, meta *meta.MetaInfoVa
 }
 
 func (s *Server) GetChunkServerInfo() error {
-	byteData, statusCode, err := util.Call("GET", s.MasterUrl, "/v1/chunkmaster/route", nil, nil)
+	byteData, statusCode, err := util.Call("GET", s.masterUrl, "/v1/chunkmaster/route", nil, nil)
 	if err != nil {
-		log.Errorf("GetChunkServerInfo response code: %d", statusCode)
-		log.Errorf("GetChunkServerInfo error: %s", err)
+		log.Errorf("GetChunkServerInfo response code: %d, error: %v", statusCode, err)
 		return err
 	}
 
@@ -686,7 +687,7 @@ func (s *Server) GetFidRange(mergeWait bool) error {
 		return nil
 	}
 
-	byteData, statusCode, err := util.Call("GET", s.MasterUrl, "/v1/chunkmaster/fid", nil, nil)
+	byteData, statusCode, err := util.Call("GET", s.masterUrl, "/v1/chunkmaster/fid", nil, nil)
 	if err != nil {
 		log.Errorf("GetChunkServerInfo response code: %d, err: %s", statusCode, err)
 		return err
@@ -756,7 +757,7 @@ func (s *Server) handleChunkServerInfo(infos map[string][]chunkserver.ChunkServe
 	if len(addServers) != 0 {
 		log.Infof("handleChunkServerInfo addServes: %s", addServers)
 		for index := 0; index < len(addServers); index++ {
-			newConnectionPool.AddPool(addServers[index])
+			newConnectionPool.AddPool(addServers[index], s.connPoolCapacity)
 		}
 	}
 
@@ -876,12 +877,12 @@ func (s *Server) Run() error {
 	s.initApi()
 	err := s.GetChunkServerInfo()
 	if err != nil {
-		log.Fatal("GetChunkServerInfo error: %s", err)
+		log.Fatalf("GetChunkServerInfo error: %v", err)
 	}
 
 	err = s.GetFidRange(false)
 	if err != nil {
-		log.Fatal("GetFidRange error: %s", err)
+		log.Fatalf("GetFidRange error: %v", err)
 	}
 
 	go s.GetFidRangeTicker()
@@ -889,7 +890,7 @@ func (s *Server) Run() error {
 
 	err = mysqldriver.InitMeta(s.metadbIp, s.metadbPort, s.metadbUser, s.metadbPassword, s.metaDatabase)
 	if err != nil {
-		log.Fatal("Connect metadb error: %v", err)
+		log.Fatalf("Connect metadb error: %v", err)
 	}
 
 	s.metaDriver = new(mysqldriver.MysqlDriver)
