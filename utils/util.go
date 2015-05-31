@@ -30,7 +30,10 @@ func Call(method, baseUrl, path string, body io.Reader, headers map[string][]str
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, resp.StatusCode, err
+		if resp != nil {
+			return nil, resp.StatusCode, err
+		}
+		return nil, http.StatusNotFound, err
 	}
 
 	dataBody, err := ioutil.ReadAll(resp.Body)
