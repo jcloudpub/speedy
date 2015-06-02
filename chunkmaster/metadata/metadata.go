@@ -1,26 +1,26 @@
 package metadata
 
 import (
-	"github.com/jcloudpub/speedy/chunkmaster/util"
+	"github.com/jcloudpub/speedy/utils"
 	"time"
 )
 
 type Chunkserver struct {
-	Id					string `json:"-"`
-	GroupId				uint16
-	Ip					string
-	Port				int
-	Status				int `json:",omitempty"`
-	GlobalStatus		int `json:",omitempty"`
-	TotalFreeSpace		int64 `json:",omitempty"`
-	MaxFreeSpace		int64 `json:",omitempty"`
-	PendingWrites		int `json:",omitempty"`
-	WritingCount		int `json:",omitempty"`
-	ReadingCount		uint32 `json:",omitempty"`
-	TotalChunks			uint32 `json:",omitempty"`
-	ConnectionsCount	uint32 `json:",omitempty"`
-	DataDir				string `json:",omitempty"`
-	UpdateTime			time.Time `json:"-"`
+	Id               string `json:"-"`
+	GroupId          uint16
+	Ip               string
+	Port             int
+	Status           int       `json:",omitempty"`
+	GlobalStatus     int       `json:",omitempty"`
+	TotalFreeSpace   int64     `json:",omitempty"`
+	MaxFreeSpace     int64     `json:",omitempty"`
+	PendingWrites    int       `json:",omitempty"`
+	WritingCount     int       `json:",omitempty"`
+	ReadingCount     uint32    `json:",omitempty"`
+	TotalChunks      uint32    `json:",omitempty"`
+	ConnectionsCount uint32    `json:",omitempty"`
+	DataDir          string    `json:",omitempty"`
+	UpdateTime       time.Time `json:"-"`
 }
 
 type Chunkservers []*Chunkserver
@@ -57,10 +57,10 @@ func GenChunkserver(jsonMap map[string]interface{}) (*Chunkserver, error) {
 	chunkserver.Port = port
 
 	/*
-	status, err := util.CheckMapInt(jsonMap, "Status")
-	if err != nil {
-		return nil, err
-	}
+		status, err := util.CheckMapInt(jsonMap, "Status")
+		if err != nil {
+			return nil, err
+		}
 	*/
 
 	//chunkserver.Status = status

@@ -1,15 +1,15 @@
 package mysqldriver
 
 import (
-	"fmt"
-	"strings"
-	"encoding/json"
-	_ "github.com/go-sql-driver/mysql"
-	"database/sql"
-	. "github.com/jcloudpub/speedy/imageserver/meta"
 	"crypto/md5"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	. "github.com/jcloudpub/speedy/imageserver/meta"
+	"github.com/jcloudpub/speedy/logs"
+	"strings"
 	"time"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 	DELFILE = 2
 )
 
-type MysqlDriver struct{
+type MysqlDriver struct {
 }
 
 var mysqlDB *sql.DB
@@ -41,7 +41,7 @@ func InitMeta(metadbIp string, metadbPort int, metadbUser, metadbPassword, metaD
 	return nil
 }
 
-func (db *MysqlDriver)StoreMetaInfo(metaInfo *MetaInfo) error {
+func (db *MysqlDriver) StoreMetaInfo(metaInfo *MetaInfo) error {
 	if metaInfo.Value.IsLast && metaInfo.Value.Index == 0 {
 		err := db.DeleteFileMetaInfo(metaInfo.Path)
 		if err != nil {
@@ -70,7 +70,7 @@ func (db *MysqlDriver)StoreMetaInfo(metaInfo *MetaInfo) error {
 //path: repositories/username/ubuntu/tag_v2
 //key: DIRECTORY_repositories/username/ubuntu
 //value: tag_v2
-func (db *MysqlDriver)ExtractDirectoryAndFile(path string) (string, string) {
+func (db *MysqlDriver) ExtractDirectoryAndFile(path string) (string, string) {
 	lastSplitIndex := strings.LastIndex(path, SPLIT)
 	if lastSplitIndex == -1 {
 		return "", ""
@@ -89,7 +89,7 @@ func (db *MysqlDriver)ExtractDirectoryAndFile(path string) (string, string) {
 }
 
 //repositories/username/ubuntu/tag_v2
-func (db *MysqlDriver)HandleDirectory(path string, opcode int16) error {
+func (db *MysqlDriver) HandleDirectory(path string, opcode int16) error {
 	directory, file := db.ExtractDirectoryAndFile(path)
 	if len(directory) == 0 || len(file) == 0 {
 		return nil
@@ -110,7 +110,7 @@ func (db *MysqlDriver)HandleDirectory(path string, opcode int16) error {
 	return nil
 }
 
-func (db *MysqlDriver)DeleteFileMetaInfo(path string) error {
+func (db *MysqlDriver) DeleteFileMetaInfo(path string) error {
 	err := delList(mysqlDB, path)
 	if err != nil {
 		return err
@@ -124,7 +124,7 @@ func (db *MysqlDriver)DeleteFileMetaInfo(path string) error {
 	return nil
 }
 
-func (db *MysqlDriver)GetDirectoryInfo(path string) ([]string, error) {
+func (db *MysqlDriver) GetDirectoryInfo(path string) ([]string, error) {
 	interDirectory := DIRECTORY + path
 
 	files, err := getList(mysqlDB, interDirectory)
@@ -139,7 +139,7 @@ func (db *MysqlDriver)GetDirectoryInfo(path string) ([]string, error) {
 	return files, nil
 }
 
-func (db *MysqlDriver)GetFileMetaInfo(path string, detail bool) ([]*MetaInfoValue, error) {
+func (db *MysqlDriver) GetFileMetaInfo(path string, detail bool) ([]*MetaInfoValue, error) {
 	list, err := getList(mysqlDB, path)
 	if err != nil {
 		return nil, err
@@ -149,7 +149,7 @@ func (db *MysqlDriver)GetFileMetaInfo(path string, detail bool) ([]*MetaInfoValu
 
 	for _, bts := range list {
 		var jsonMap map[string]interface{}
-		err := json.Unmarshal([]byte(bts), &jsonMap) 
+		err := json.Unmarshal([]byte(bts), &jsonMap)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +171,7 @@ func (db *MysqlDriver)GetFileMetaInfo(path string, detail bool) ([]*MetaInfoValu
 	return metaInfoValues, nil
 }
 
-func (db *MysqlDriver)GetFragmentMetaInfo(path string, index, start, end uint64) (*MetaInfoValue, error) {
+func (db *MysqlDriver) GetFragmentMetaInfo(path string, index, start, end uint64) (*MetaInfoValue, error) {
 	metaInfoValues, err := db.GetFileMetaInfo(path, true)
 	if err != nil {
 		return nil, err
@@ -204,7 +204,7 @@ func newMySqlConn(ip string, port int, user string, passwd string, database stri
 
 func connHeartBeater(conn *sql.DB) {
 	for {
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 
 		err := checkConn(conn)
 		if err != nil {

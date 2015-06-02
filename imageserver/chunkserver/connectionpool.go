@@ -1,12 +1,11 @@
 package chunkserver
 
-
 import (
-	"sync"
-	"time"
 	"errors"
 	"github.com/jcloudpub/speedy/imageserver/pools"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"github.com/jcloudpub/speedy/logs"
+	"sync"
+	"time"
 )
 
 var (
@@ -24,16 +23,16 @@ type PoolConnection interface {
 type CreateConnectionFunc func(*ConnectionPool) (connection PoolConnection, err error)
 
 type ConnectionPool struct {
-	mu *sync.Mutex
+	mu          *sync.Mutex
 	connections *pools.ResourcePool
-	capacity int
+	capacity    int
 	idleTimeout time.Duration
 }
 
 func NewConnectionPool(name string, capacity int, idleTimeout time.Duration) *ConnectionPool {
 	cp := &ConnectionPool{
-		mu: &sync.Mutex{},
-		capacity: capacity,
+		mu:          &sync.Mutex{},
+		capacity:    capacity,
 		idleTimeout: idleTimeout,
 	}
 
@@ -116,7 +115,7 @@ func (cp *ConnectionPool) Put(conn PoolConnection) {
 	p.Put(conn)
 }
 
-func (cp *ConnectionPool) SetCapacity(capacity int)(err error) {
+func (cp *ConnectionPool) SetCapacity(capacity int) (err error) {
 	cp.mu.Lock()
 	defer cp.mu.Unlock()
 

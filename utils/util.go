@@ -1,39 +1,20 @@
 package util
 
 import (
-	"io"
-	"fmt"
-	"mime"
-	"strconv"
-	"net/http"
-	"io/ioutil"
-	"encoding/json"
 	"crypto/rand"
 	"encoding/hex"
-
-	"github.com/jcloudpub/speedy/chunkmaster/util/log"
+	"fmt"
+	"github.com/jcloudpub/speedy/logs"
+	"io"
+	"io/ioutil"
+	"mime"
+	"net/http"
+	"strconv"
 )
 
-func EncodeJson(data interface {}) ([]byte, error) {
-	body, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
-}
-
-func DecodeJson(data []byte) (map[string]interface {}, error) {
-	var m map[string]interface {}
-	err := json.Unmarshal(data, &m)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func Call(method, baseUrl, path string, body io.Reader, headers map[string][]string)([]byte, int, error) {
+func Call(method, baseUrl, path string, body io.Reader, headers map[string][]string) ([]byte, int, error) {
 	client := &http.Client{}
-	req, err := http.NewRequest(method, baseUrl + path, body)
+	req, err := http.NewRequest(method, baseUrl+path, body)
 	if err != nil {
 		return nil, 408, err
 	}
@@ -49,10 +30,13 @@ func Call(method, baseUrl, path string, body io.Reader, headers map[string][]str
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, resp.StatusCode, err
+		if resp != nil {
+			return nil, resp.StatusCode, err
+		}
+		return nil, http.StatusNotFound, err
 	}
 
-	dataBody, err:= ioutil.ReadAll(resp.Body)
+	dataBody, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
 		return nil, resp.StatusCode, err

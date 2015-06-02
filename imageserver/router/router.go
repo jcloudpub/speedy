@@ -1,23 +1,22 @@
 package router
 
 import (
-	"os"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/jcloudpub/speedy/imageserver/chunkserver"
 	"github.com/jcloudpub/speedy/imageserver/meta"
-	"github.com/jcloudpub/speedy/imageserver/util"
 	"github.com/jcloudpub/speedy/imageserver/meta/mysqldriver"
-	"time"
+	"github.com/jcloudpub/speedy/logs"
+	"github.com/jcloudpub/speedy/utils"
 	"io/ioutil"
+	"math"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"sync"
-	"math/rand"
 	"sync/atomic"
-	"math"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"time"
 )
 
 const (
@@ -30,7 +29,7 @@ const (
 )
 
 type Server struct {
-	MasterUrl		  string
+	masterUrl         string
 	Ip                string
 	Port              int
 	router            *mux.Router
@@ -39,39 +38,41 @@ type Server struct {
 	fids              *chunkserver.Fids                      //ChunkServerGoups
 	chunkServerGroups *chunkserver.ChunkServerGroups         //groupId <> []ChunkServer
 	connectionPools   *chunkserver.ChunkServerConnectionPool //{"host:port":connectionPool}
-	metaDriver		  meta.MetaDriver
-	limitNum		  int
+	metaDriver        meta.MetaDriver
+	limitNum          int
+	connPoolCapacity  int
 	getFidRetryCount  int32
 	metadbIp          string
-	metadbPort		  int
-	metadbUser		  string
-	metadbPassword	  string
-	metaDatabase	  string
+	metadbPort        int
+	metadbUser        string
+	metadbPassword    string
+	metaDatabase      string
 }
 
-func NewServer(masterUrl, ip string, port int, num int, metadbIp string, metadbPort int, metadbUser, metadbPassword, metaDatabase string) *Server {
+func NewServer(masterUrl, ip string, port int, num int, metadbIp string, metadbPort int, metadbUser, metadbPassword, metaDatabase string, connPoolCapacity int) *Server {
 	return &Server{
-		MasterUrl:		   masterUrl,
+		masterUrl:         masterUrl,
 		Ip:                ip,
 		Port:              port,
 		fids:              chunkserver.NewFids(),
 		chunkServerGroups: nil,
 		connectionPools:   nil,
-		limitNum:		   num,
+		limitNum:          num,
+		connPoolCapacity:  connPoolCapacity,
 		getFidRetryCount:  0,
 		metadbIp:          metadbIp,
-		metadbPort:		   metadbPort,
-		metadbUser:		   metadbUser,
-		metadbPassword:	   metadbPassword,
-		metaDatabase:	   metaDatabase,
+		metadbPort:        metadbPort,
+		metadbUser:        metadbUser,
+		metadbPassword:    metadbPassword,
+		metaDatabase:      metaDatabase,
 	}
 }
 
 func (s *Server) initApi() {
 	m := map[string]map[string]http.HandlerFunc{
 		"GET": {
-			"/v1/fileinfo": s.getFileInfo,
-			"/v1/file":     s.downloadFile,
+			"/v1/fileinfo":       s.getFileInfo,
+			"/v1/file":           s.downloadFile,
 			"/v1/list_directory": s.getDirectoryInfo,
 		},
 		"POST": {
@@ -149,7 +150,7 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(chunkServers) == 0 {//TODO need check, num of chunkserver >= 2
+	if len(chunkServers) == 0 { //TODO need check, num of chunkserver >= 2
 		log.Errorf("select ChunkServerGroup error, len(chunkServers) == 0")
 		s.responseResult(nil, http.StatusInternalServerError, fmt.Errorf("select ChunkServerGroup error"), w)
 		return
@@ -228,20 +229,20 @@ func (s *Server) getFileInfo(w http.ResponseWriter, r *http.Request) {
 
 	log.Infof("[getFileInfo] Path: %s", path)
 
-    result, err := s.metaDriver.GetFileMetaInfo(path, false)
-    if err != nil {
-    	log.Errorf("getFileInfo get metainfo error, key: %s, error: %s", path, err)
-    	s.responseResult(nil, http.StatusInternalServerError, err, w)
-    	return
-    }
+	result, err := s.metaDriver.GetFileMetaInfo(path, false)
+	if err != nil {
+		log.Errorf("[getFileInfo] get metainfo error, key: %s, error: %s", path, err)
+		s.responseResult(nil, http.StatusInternalServerError, err, w)
+		return
+	}
 
-    if len(result) == 0 {
-		log.Infof("getFileInfo metainfo not exists, key: %s", path)
+	if len(result) == 0 {
+		log.Infof("[getFileInfo] metainfo not exists, key: %s", path)
 		s.responseResult(nil, http.StatusNotFound, err, w)
 		return
 	}
 
-	resultMap := make(map[string]interface {})
+	resultMap := make(map[string]interface{})
 	resultMap["fragment-info"] = result
 	jsonResult, err := json.Marshal(resultMap)
 	if err != nil {
@@ -273,7 +274,7 @@ func (s *Server) getDirectoryInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resultMap := make(map[string]interface {})
+	resultMap := make(map[string]interface{})
 	resultMap["file-list"] = result
 	jsonResult, err := json.Marshal(resultMap)
 	if err != nil {
@@ -283,7 +284,16 @@ func (s *Server) getDirectoryInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Infof("[getDirectoryInfo] success, directory: %s, result: %s", path, string(jsonResult))
-	s.responseResult(jsonResult, http.StatusOK , nil, w)
+	s.responseResult(jsonResult, http.StatusOK, nil, w)
+}
+
+func (s *Server) checkErrorAndConnPool(err error, chunkServer *chunkserver.ChunkServer, connPools *chunkserver.ChunkServerConnectionPool) {
+	if "EOF" == err.Error() {
+		err := connPools.CheckConnPool(chunkServer)
+		if err != nil {
+			log.Errorf("CheckConnPool error: %v", err)
+		}
+	}
 }
 
 func (s *Server) downloadFile(w http.ResponseWriter, r *http.Request) {
@@ -339,6 +349,7 @@ func (s *Server) downloadFile(w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 		connPools.ReleaseConn(conn)
 		s.responseResult(nil, http.StatusInternalServerError, err, w)
+		s.checkErrorAndConnPool(err, chunkServer, connPools)
 		return
 	}
 
@@ -407,7 +418,7 @@ func (s *Server) handlePostResult(ch chan string, size int) error {
 	return nil
 }
 
-func (s *Server) getFid() (uint64, error){
+func (s *Server) getFid() (uint64, error) {
 	fileId, err := s.fids.GetFid()
 
 	if err != nil {
@@ -475,6 +486,7 @@ func (s *Server) postFileConcurrence(chunkServer *chunkserver.ChunkServer, data 
 		conn.Close()
 		s.connectionPools.ReleaseConn(conn)
 		c <- err.Error()
+		s.checkErrorAndConnPool(err, chunkServer, connPools)
 		return
 	}
 
@@ -532,7 +544,6 @@ func (s *Server) getOneNormalChunkServer(mi *meta.MetaInfo) (*chunkserver.ChunkS
 	log.Errorf("can not find an available chunkserver, metainfo: %s", mi)
 	return nil, fmt.Errorf("can not find an available chunkserver")
 }
-
 
 func (s *Server) selectChunkServerGroupSimple(size int64, meta *meta.MetaInfoValue) ([]chunkserver.ChunkServer, error) {
 	//TODO get a normal group, the MaxFreeSpace should > size, and the health num >= LimitCSNormalSize
@@ -593,7 +604,7 @@ func (s *Server) selectChunkServerGroupComplex(size int64, meta *meta.MetaInfoVa
 
 			if server.Status != chunkserver.ERR_STATUS && server.Status != chunkserver.RW_STATUS {
 				avilable = false
-				break;
+				break
 			}
 
 			if server.Status == chunkserver.ERR_STATUS {
@@ -635,7 +646,7 @@ func (s *Server) selectChunkServerGroupComplex(size int64, meta *meta.MetaInfoVa
 
 	log.Debugf("minHeap: %s", minHeap)
 
-	index := rand.Int()%selectNum
+	index := rand.Int() % selectNum
 	log.Debugf("index: %d", index)
 	resultGroupId, err := minHeap.GetElementGroupId(index)
 
@@ -649,10 +660,9 @@ func (s *Server) selectChunkServerGroupComplex(size int64, meta *meta.MetaInfoVa
 }
 
 func (s *Server) GetChunkServerInfo() error {
-	byteData, statusCode, err := util.Call("GET", s.MasterUrl, "/v1/chunkmaster/route", nil, nil)
+	byteData, statusCode, err := util.Call("GET", s.masterUrl, "/v1/chunkmaster/route", nil, nil)
 	if err != nil {
-		log.Errorf("GetChunkServerInfo response code: %d", statusCode)
-		log.Errorf("GetChunkServerInfo error: %s", err)
+		log.Errorf("GetChunkServerInfo response code: %d, error: %v", statusCode, err)
 		return err
 	}
 
@@ -677,7 +687,7 @@ func (s *Server) GetFidRange(mergeWait bool) error {
 		return nil
 	}
 
-	byteData, statusCode, err := util.Call("GET", s.MasterUrl, "/v1/chunkmaster/fid", nil, nil)
+	byteData, statusCode, err := util.Call("GET", s.masterUrl, "/v1/chunkmaster/fid", nil, nil)
 	if err != nil {
 		log.Errorf("GetChunkServerInfo response code: %d, err: %s", statusCode, err)
 		return err
@@ -697,7 +707,6 @@ func (s *Server) GetFidRange(mergeWait bool) error {
 		return err
 	}
 
-	log.Infof("get new fid: %s", newFids)
 	s.fids.Merge(newFids.Start, newFids.End, mergeWait)
 	return nil
 }
@@ -724,9 +733,6 @@ func (s *Server) handleChunkServerInfo(infos map[string][]chunkserver.ChunkServe
 		return
 	}
 
-	log.Infof("len(delServers): %d, delServers: %v", len(delServers), delServers)
-	log.Infof("len(addServers): %d, addServers: %v", len(addServers), addServers)
-
 	oldConnectionPool := s.GetConnectionPools()
 	newConnectionPool := chunkserver.NewChunkServerConnectionPool()
 
@@ -738,21 +744,24 @@ func (s *Server) handleChunkServerInfo(infos map[string][]chunkserver.ChunkServe
 	}
 
 	if len(delServers) != 0 {
-		log.Infof("handleChunkServerInfo deleteServers: %s", delServers)
+		log.Infof("len(delServers): %d", len(delServers))
 		for index := 0; index < len(delServers); index++ {
+			log.Infof("delete chunkserver: %v", delServers[index])
 			newConnectionPool.RemovePool(delServers[index])
 		}
 	}
 
 	if len(addServers) != 0 {
-		log.Infof("handleChunkServerInfo addServes: %s", addServers)
+		log.Infof("len(addServers): %d", len(addServers))
 		for index := 0; index < len(addServers); index++ {
-			newConnectionPool.AddPool(addServers[index])
+			log.Infof("add chunkserver: %v", addServers[index])
+			newConnectionPool.AddPool(addServers[index], s.connPoolCapacity)
 		}
 	}
 
-	log.Infof("newConnectionPool: %v", newConnectionPool)
-	log.Infof("newChunkServerGroups: %v", newChunkServerGroups)
+	//log.Infof("newConnectionPool: %v", newConnectionPool)
+	//log.Infof("newChunkServerGroups: %v", newChunkServerGroups)
+	newChunkServerGroups.Print()
 
 	s.ReplaceConnPoolsAndChunkServerGroups(newConnectionPool, newChunkServerGroups)
 
@@ -801,7 +810,7 @@ func serverInfoDiff(newInfo, oldInfo map[string][]chunkserver.ChunkServer) (delS
 }
 
 //diff = info1 - (the intersection info1 and info2  )
-func infoDiff(info1, info2 map[string][]chunkserver.ChunkServer) ([]*chunkserver.ChunkServer) {
+func infoDiff(info1, info2 map[string][]chunkserver.ChunkServer) []*chunkserver.ChunkServer {
 	diffServers := make([]*chunkserver.ChunkServer, 0)
 
 	for groupId, servers1 := range info1 {
@@ -812,7 +821,7 @@ func infoDiff(info1, info2 map[string][]chunkserver.ChunkServer) ([]*chunkserver
 				diffServers = append(diffServers, &servers1[index])
 			}
 
-			continue;
+			continue
 		}
 
 		for index1 := 0; index1 < len(servers1); index1++ {
@@ -867,14 +876,12 @@ func (s *Server) Run() error {
 	s.initApi()
 	err := s.GetChunkServerInfo()
 	if err != nil {
-		log.Errorf("GetChunkServerInfo error: %s", err)
-		os.Exit(1)
+		log.Fatalf("GetChunkServerInfo error: %v", err)
 	}
 
 	err = s.GetFidRange(false)
 	if err != nil {
-		log.Errorf("GetFidRange error: %s", err)
-		os.Exit(1)
+		log.Fatalf("GetFidRange error: %v", err)
 	}
 
 	go s.GetFidRangeTicker()
@@ -882,13 +889,12 @@ func (s *Server) Run() error {
 
 	err = mysqldriver.InitMeta(s.metadbIp, s.metadbPort, s.metadbUser, s.metadbPassword, s.metaDatabase)
 	if err != nil {
-		log.Errorf("connect metadb error: %v", err)
-		os.Exit(1)
+		log.Fatalf("Connect metadb error: %v", err)
 	}
 
 	s.metaDriver = new(mysqldriver.MysqlDriver)
 
 	http.Handle("/", s.router)
-	log.Infof("listen: %v", s.Port)
-	return http.ListenAndServe(s.Ip + ":" + strconv.Itoa(s.Port), nil)
+	log.Infof("listen: %s:%d", s.Ip, s.Port)
+	return http.ListenAndServe(s.Ip+":"+strconv.Itoa(s.Port), nil)
 }

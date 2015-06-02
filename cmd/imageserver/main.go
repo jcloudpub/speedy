@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"strconv"
-	"runtime"
-	"os"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
 	"github.com/jcloudpub/speedy/imageserver/router"
+	"github.com/jcloudpub/speedy/logs"
+	"os"
+	"runtime"
+	"strconv"
 )
 
 func main() {
@@ -21,8 +21,9 @@ func main() {
 	var metaPort = flag.Int("dp", 3306, "metadb port")
 	var userName = flag.String("u", "root", "metadb user")
 	var password = flag.String("pw", "", "metadb password")
-	var metadb = flag.String("db", "metadb", "meta database") 
+	var metadb = flag.String("db", "metadb", "meta database")
 	var debug = flag.Bool("D", false, "log debug level")
+	var connPoolCapacity = flag.Int("c", 200, "the capacity of every chunkserver's connection pool")
 
 	flag.Parse()
 
@@ -31,13 +32,10 @@ func main() {
 	}
 
 	var masterUrl = "http://" + *masterIp + ":" + strconv.Itoa(*masterPort)
-	var imageServerAddr = *host + ":" + strconv.Itoa(*port)
 	log.Infof("master URL: %s", masterUrl)
-	log.Infof("listen: %s", imageServerAddr)
-
 	log.Infof("the limit num of available chunkserver: %d", *limitNum)
 
-	server := router.NewServer(masterUrl, *host, *port, *limitNum, *metaIp, *metaPort, *userName, *password, *metadb)
+	server := router.NewServer(masterUrl, *host, *port, *limitNum, *metaIp, *metaPort, *userName, *password, *metadb, *connPoolCapacity)
 	log.Infof("imageserver start...")
 	err := server.Run()
 	if err != nil {

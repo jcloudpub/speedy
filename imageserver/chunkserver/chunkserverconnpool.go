@@ -1,22 +1,21 @@
 package chunkserver
 
-
 import (
-	"sync"
 	"fmt"
+	"github.com/jcloudpub/speedy/logs"
+	"sync"
 	"time"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
 )
 
 type ChunkServerConnectionPool struct {
-	mu sync.Mutex
-	Pools map[string]*ConnectionPool// <ip:port>:connectionpool
+	mu    sync.Mutex
+	Pools map[string]*ConnectionPool // <ip:port>:connectionpool
 }
 
 func NewChunkServerConnectionPool() *ChunkServerConnectionPool {
-	return &ChunkServerConnectionPool {
-		mu: sync.Mutex{},
-		Pools : make(map[string]*ConnectionPool),
+	return &ChunkServerConnectionPool{
+		mu:    sync.Mutex{},
+		Pools: make(map[string]*ConnectionPool),
 	}
 }
 
@@ -33,11 +32,30 @@ func (cscp *ChunkServerConnectionPool) GetConn(chunkserver *ChunkServer) (PoolCo
 	return pool.Get()
 }
 
+//chunkserver closed, the state of connection in pool is close_wait, need to close those connection
+func (cscp *ChunkServerConnectionPool) CheckConnPool(chunkserver *ChunkServer) error {
+	for {
+		conn, err := cscp.GetConn(chunkserver)
+		if err != nil {
+			return err
+		}
+
+		err = chunkserver.Ping(conn.(*PooledConn))
+		if err != nil {
+			conn.Close()
+			cscp.ReleaseConn(conn)
+			continue
+		}
+
+		return nil
+	}
+}
+
 func (cscp *ChunkServerConnectionPool) ReleaseConn(pc PoolConnection) {
 	pc.Recycle()
 }
 
-func (cscp *ChunkServerConnectionPool) AddPool(chunkserver *ChunkServer) error {
+func (cscp *ChunkServerConnectionPool) AddPool(chunkserver *ChunkServer, capacity int) error {
 	cscp.mu.Lock()
 	defer cscp.mu.Unlock()
 
@@ -50,7 +68,7 @@ func (cscp *ChunkServerConnectionPool) AddPool(chunkserver *ChunkServer) error {
 		return nil
 	}
 
-	pool = NewConnectionPool("chunk server connection pool", 200, 3600*time.Second)
+	pool = NewConnectionPool("chunk server connection pool", capacity, 3600*time.Second)
 
 	log.Debugf("ChunkServerConnectionPool try to open ")
 	pool.Open(ConnectionCreator(key))
@@ -97,10 +115,10 @@ func (cscp *ChunkServerConnectionPool) RemoveAndClosePool(chunkserver *ChunkServ
 		return fmt.Errorf("pool %s not exist", key)
 	}
 
-	delete (cscp.Pools, key)
+	delete(cscp.Pools, key)
 
 	cscp.mu.Unlock()
 
-	pool.Close()//TODO async close
+	pool.Close() //TODO async close
 	return nil
 }

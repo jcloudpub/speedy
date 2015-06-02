@@ -1,15 +1,15 @@
 package speedytool
 
 import (
-	"os"
+	"bytes"
 	"fmt"
+	"github.com/jcloudpub/speedy/logs"
+	"github.com/jcloudpub/speedy/utils"
+	"net/http"
+	"os"
+	"strconv"
 	"sync"
 	"time"
-	"bytes"
-	"strconv"
-	"net/http"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
-	"github.com/jcloudpub/speedy/imageserver/util"
 )
 
 const (
@@ -40,8 +40,8 @@ func preprocessFile(fileName string, partSize int) (fileBody []byte, fileSize in
 		return nil, 0, 0, 0, fmt.Errorf("[preprocessFile] read %s nread: %v, fileSize: %v, err: %v", fileName, nread, fileSize, err)
 	}
 
-	partCount = int(fileSize/int64(partSize))
-	partial = int(fileSize%int64(partSize))
+	partCount = int(fileSize / int64(partSize))
+	partial = int(fileSize % int64(partSize))
 	return fileBody, fileSize, partCount, partial, nil
 }
 
@@ -74,7 +74,7 @@ func postFileTestSpeedyConcurrency(imageserverAddr string, fileBody []byte, numG
 	end := time.Now()
 	duration := end.Sub(begin)
 
-	success := true 
+	success := true
 	for i := 0; i < numGoroutine; i++ {
 		if result[i] != 1 {
 			log.Errorf("[analysizePostFile] post error, goroutine %d error", i)
@@ -87,7 +87,7 @@ func postFileTestSpeedyConcurrency(imageserverAddr string, fileBody []byte, numG
 		return
 	}
 	totalSize := fileSize * int64(numGoroutine)
-	bandWidth := (float64(totalSize)/duration.Seconds())/(1024*1024) //B to MB
+	bandWidth := (float64(totalSize) / duration.Seconds()) / (1024 * 1024) //B to MB
 	log.Infof("[PostFileTestSpeedyConcurrency] upload bandWidth: %v MB/s", bandWidth)
 }
 
@@ -116,7 +116,6 @@ func deleteFileTestSpeedy(imageserverAddr string, index int, partCount int, part
 	log.Infof("[deleteFileTestSpeedy] %s success", path)
 }
 
-
 func postFileTestSpeedy(imageserverAddr string, index int, fileBody []byte, partCount int, partial int, partSize int, result []int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if partCount == 0 && partial == 0 {
@@ -136,23 +135,23 @@ func postFileTestSpeedy(imageserverAddr string, index int, fileBody []byte, part
 	begin := 0
 	end := 0
 	for k := 0; k < partCount-1; k++ {
-		begin = k * partSize 
-		end = (k+1) * partSize
-		err := postFile(imageserverAddr, path, fileBody[begin:end], k, int64(begin), int64(end),  false)
+		begin = k * partSize
+		end = (k + 1) * partSize
+		err := postFile(imageserverAddr, path, fileBody[begin:end], k, int64(begin), int64(end), false)
 		if err != nil {
 			log.Errorf("[postFileTestSpeedy] postFile err: %v", err)
 			return
 		}
 	}
 
-	k := partCount - 1 
+	k := partCount - 1
 	begin = k * partSize
 	if partial != 0 {
 		end = begin + partial
 	} else {
-		end = (k+1)* partSize
+		end = (k + 1) * partSize
 	}
-	err := postFile(imageserverAddr, path, fileBody[begin:end], k, int64(begin), int64(end),  true)
+	err := postFile(imageserverAddr, path, fileBody[begin:end], k, int64(begin), int64(end), true)
 	if err != nil {
 		log.Errorf("[postFileTestSpeedy] postFile err: %v", err)
 		return
@@ -160,14 +159,14 @@ func postFileTestSpeedy(imageserverAddr string, index int, fileBody []byte, part
 	result[index] = 1
 }
 
-func postFile(imageserverAddr string, path string, data []byte, index int,  begin int64, end int64, isLast bool) error {
+func postFile(imageserverAddr string, path string, data []byte, index int, begin int64, end int64, isLast bool) error {
 	header := make(map[string][]string)
 	header["Path"] = []string{path}
 	header["Fragment-Index"] = []string{fmt.Sprintf("%v", index)}
 	header["Bytes-Range"] = []string{fmt.Sprintf("%v-%v", begin, end)}
 	header["Is-Last"] = []string{fmt.Sprintf("%v", isLast)}
 
-	_, statusCode, err := util.Call("POST", imageserverAddr, "/v1/file", bytes.NewBuffer(data), header )
+	_, statusCode, err := util.Call("POST", imageserverAddr, "/v1/file", bytes.NewBuffer(data), header)
 	if err != nil || statusCode != http.StatusOK {
 		return fmt.Errorf("[postFile] failed, path: %s, error: %v, statusCode: %v", path, err, statusCode)
 	}

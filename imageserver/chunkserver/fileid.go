@@ -2,22 +2,22 @@ package chunkserver
 
 import (
 	"fmt"
+	"github.com/jcloudpub/speedy/logs"
 	"time"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
 )
 
 //[start, end)
 type Fids struct {
 	Start uint64 `json:"FidBegin"`
 	End   uint64 `json:"FidEnd"`
-	ch	  chan uint64
+	ch    chan uint64
 }
 
 func NewFids() *Fids {
-	return &Fids {
-		Start:		0,
-		End:		0,
-		ch:			make(chan uint64, 200),
+	return &Fids{
+		Start: 0,
+		End:   0,
+		ch:    make(chan uint64, 200),
 	}
 }
 
@@ -40,13 +40,13 @@ func (fids *Fids) ReSet(start, end uint64) {
 	}
 }
 
-func (fids *Fids) Merge(start uint64, end uint64, wait bool) {//[start, end)
+func (fids *Fids) Merge(start uint64, end uint64, wait bool) { //[start, end)
 	log.Debugf("merge begin, start:%d, end:%d, wait: %s", start, end, wait)
 
 	if !wait {
 		for i := start; i < end; i++ {
 			select {
-			case fids.ch <-i:
+			case fids.ch <- i:
 				log.Debugf("fid %d put to channel success", i)
 			default:
 				log.Infof("fid channel is full")
@@ -82,7 +82,7 @@ func (fids *Fids) GetFidWait() (uint64, error) {
 	case fid := <-fids.ch:
 		log.Debugf("GetFid success, fid is: %d", fid)
 		return fid, nil
-	case <-time.After(time.Second*3):
+	case <-time.After(time.Second * 3):
 		log.Debugf("GetFid failed, wait timeout")
 		return 0, FIDS_EMPTY_ERR
 	}

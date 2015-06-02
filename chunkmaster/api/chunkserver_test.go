@@ -2,9 +2,9 @@ package api
 
 import (
 	"bytes"
-	"testing"
+	"github.com/jcloudpub/speedy/utils"
 	"net/http"
-	"github.com/jcloudpub/speedy/chunkmaster/util"
+	"testing"
 )
 
 const (
@@ -35,7 +35,7 @@ func TestChunkserverInitServerHandler(t *testing.T) {
 	param := make(map[string]interface{})
 	param["GroupId"] = 1
 	param["Ip"] = "127.0.0.1"
-	param["Port"] = 6666 
+	param["Port"] = 6666
 
 	json, err := util.EncodeJson(param)
 	if err != nil {
@@ -54,7 +54,7 @@ func TestReportChunkserverInfoHandler(t *testing.T) {
 	param := make(map[string]interface{})
 	param["GroupId"] = 1
 	param["Ip"] = "127.0.0.1"
-	param["Port"] = 6666 
+	param["Port"] = 6666
 	param["TotalFreeSpace"] = 22234
 	param["MaxFreeSpace"] = 23233
 	param["PendingWrites"] = 10

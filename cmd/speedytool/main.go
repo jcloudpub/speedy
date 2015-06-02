@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-	"runtime"
+	"fmt"
 	"github.com/jcloudpub/speedy/speedytool"
+	"runtime"
 )
 
 func main() {
@@ -17,8 +17,6 @@ func main() {
 
 	flag.Parse()
 	imageserverAddr := fmt.Sprintf("http://%s:%d", *imageserverIp, *imageserverPort)
-	partSize := *partSizeMB * 1024 *1024
+	partSize := *partSizeMB * 1024 * 1024
 	speedytool.TestSpeedyConcurrency(imageserverAddr, *fileName, *numGoroutine, partSize)
 }
-
-

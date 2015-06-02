@@ -2,40 +2,40 @@ package mysqldriver
 
 import (
 	"fmt"
-	"github.com/jcloudpub/speedy/chunkmaster/util"
 	"github.com/jcloudpub/speedy/chunkmaster/metadata"
+	"github.com/jcloudpub/speedy/utils"
 )
 
 const (
 	ADD_CHUNKSERVER_SQL = "INSERT INTO chunkserver (chunkserver_id, group_id, ip, port, status," +
-						" total_free_space, max_free_space, pend_writes, writing_count, data_path, " +
-						" reading_count, total_chunks, conn_counts, create_time) " +
-						" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
+		" total_free_space, max_free_space, pend_writes, writing_count, data_path, " +
+		" reading_count, total_chunks, conn_counts, create_time) " +
+		" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now())"
 
-	EXIST_CHUNKSERVER_SQL = "SELECT * FROM chunkserver WHERE group_id = ? AND ip = ? AND port = ? AND deleted = 0"
+	EXIST_CHUNKSERVER_SQL  = "SELECT * FROM chunkserver WHERE group_id = ? AND ip = ? AND port = ? AND deleted = 0"
 	UPDATE_CHUNKSERVER_SQL = "UPDATE chunkserver SET total_free_space = ?, max_free_space = ?, pend_writes = ?, writing_count = ?, " +
-							" data_path = ?, reading_count = ?, total_chunks = ?, conn_counts = ? " +
-							" WHERE group_id = ? AND ip = ? AND port = ? AND deleted = 0"
+		" data_path = ?, reading_count = ?, total_chunks = ?, conn_counts = ? " +
+		" WHERE group_id = ? AND ip = ? AND port = ? AND deleted = 0"
 
 	UPDATE_CHUNKSERVER_INFO_SQL = "UPDATE chunkserver SET total_free_space = ?, max_free_space = ?, pend_writes = ?, writing_count = ?, " +
-							" data_path = ?, reading_count = ?, total_chunks = ?, conn_counts = ? , status = ?" +
-							" WHERE group_id = ? AND ip = ? AND port = ? AND status = ? AND deleted = 0"
+		" data_path = ?, reading_count = ?, total_chunks = ?, conn_counts = ? , status = ?" +
+		" WHERE group_id = ? AND ip = ? AND port = ? AND status = ? AND deleted = 0"
 
 	UPDATE_CHUNKSERVER_STATUS_SQL = "UPDATE chunkserver SET  status = ?" +
-							" WHERE group_id = ? AND ip = ? AND port = ? AND status = ? AND deleted = 0"
+		" WHERE group_id = ? AND ip = ? AND port = ? AND status = ? AND deleted = 0"
 
 	UPDATE_CHUNKSERVER_NORMAL_STATUS = "UPDATE chunkserver SET abnormal_count = 0, status = ? WHERE ip = ? AND port = ? AND deleted = 0 AND status != ?"
 
 	UPDATE_CHUNKSERVER_ERROR_STATUS = "UPDATE chunkserver SET status = ? WHERE ip = ? AND port = ? AND deleted = 0 AND  abnormal_count > ?"
 
-	LIST_CHUNKSERVER_GROUPID_SQL = "SELECT chunkserver_id, group_id, ip, port, " + 
-	"status, global_status, total_free_space, max_free_space, pend_writes, " + 
-	"writing_count, data_path, reading_count, total_chunks, conn_counts " +
+	LIST_CHUNKSERVER_GROUPID_SQL = "SELECT chunkserver_id, group_id, ip, port, " +
+		"status, global_status, total_free_space, max_free_space, pend_writes, " +
+		"writing_count, data_path, reading_count, total_chunks, conn_counts " +
 		" FROM chunkserver WHERE deleted = 0 and group_id=?"
 
-	LIST_CHUNKSERVER_SQL = "SELECT chunkserver_id, group_id, ip, port, " + 
-	"status, global_status, total_free_space, max_free_space, pend_writes, " + 
-	"writing_count, data_path, reading_count, total_chunks, conn_counts " +
+	LIST_CHUNKSERVER_SQL = "SELECT chunkserver_id, group_id, ip, port, " +
+		"status, global_status, total_free_space, max_free_space, pend_writes, " +
+		"writing_count, data_path, reading_count, total_chunks, conn_counts " +
 		" FROM chunkserver WHERE deleted = 0 "
 )
 

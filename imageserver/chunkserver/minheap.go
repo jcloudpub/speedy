@@ -2,27 +2,27 @@ package chunkserver
 
 import (
 	"fmt"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"github.com/jcloudpub/speedy/logs"
 )
 
 type HeapElement struct {
-	GroupId string
-	FreeSpace int64
-	PendingWrites	int
-	WritingCount   int
+	GroupId       string
+	FreeSpace     int64
+	PendingWrites int
+	WritingCount  int
 }
 
 type MinHeap struct {
 	capacity int
-	size int
-	arr []*HeapElement
+	size     int
+	arr      []*HeapElement
 }
 
 func NewMinHeap(capa int) *MinHeap {
 	return &MinHeap{
-		capacity	: capa,
-		size		: 0,
-		arr 		: make([]*HeapElement, capa),
+		capacity: capa,
+		size:     0,
+		arr:      make([]*HeapElement, capa),
 	}
 }
 
@@ -36,10 +36,10 @@ func (h *MinHeap) GetElementGroupId(index int) (string, error) {
 
 func (h *MinHeap) AddElement(groupId string, freeSpace int64, pendingWrites int, writingCount int) {
 	ele := &HeapElement{
-		GroupId: groupId,
-		FreeSpace: freeSpace,
+		GroupId:       groupId,
+		FreeSpace:     freeSpace,
 		PendingWrites: pendingWrites,
-		WritingCount: writingCount,
+		WritingCount:  writingCount,
 	}
 
 	if h.size < h.capacity {
@@ -98,7 +98,7 @@ func (h *MinHeap) minHeapify(index int) {
 	smallest = h.compare(smallest, rightIndex)
 
 	if smallest != index {
-		tempElement := 	h.arr[smallest]
+		tempElement := h.arr[smallest]
 		h.arr[smallest] = h.arr[index]
 		h.arr[index] = tempElement
 		h.minHeapify(smallest)
@@ -113,7 +113,7 @@ func (h *MinHeap) MinHeapifySecondary(index int) {
 	smallest = h.compareSecondary(smallest, rightIndex)
 
 	if smallest != index {
-		tempElement := 	h.arr[smallest]
+		tempElement := h.arr[smallest]
 		h.arr[smallest] = h.arr[index]
 		h.arr[index] = tempElement
 		h.MinHeapifySecondary(smallest)
@@ -135,7 +135,7 @@ func (h *MinHeap) compare(parent int, child int) int {
 func (h *MinHeap) compareSecondary(parent int, child int) int {
 	length := h.size
 
-	if (child < length) {
+	if child < length {
 		if h.arr[parent].PendingWrites == 0 && h.arr[child].PendingWrites == 0 {
 			if h.arr[parent].WritingCount > h.arr[child].WritingCount {
 				return child
@@ -151,10 +151,10 @@ func (h *MinHeap) compareSecondary(parent int, child int) int {
 	return parent
 }
 
-func left(index int) int{
+func left(index int) int {
 	return index*2 + 1
 }
 
-func right(index int) int{
+func right(index int) int {
 	return index*2 + 2
 }

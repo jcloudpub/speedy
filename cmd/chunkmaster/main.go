@@ -1,17 +1,15 @@
 package main
 
 import (
-	"os"
-	"strconv"
 	"flag"
-	"runtime"
-	"net/http"
-
 	"github.com/gorilla/mux"
-
 	"github.com/jcloudpub/speedy/chunkmaster/api"
-	"github.com/jcloudpub/speedy/chunkmaster/util"
-	"github.com/jcloudpub/speedy/chunkmaster/util/log"
+	"github.com/jcloudpub/speedy/logs"
+	"github.com/jcloudpub/speedy/utils"
+	"net/http"
+	"os"
+	"runtime"
+	"strconv"
 )
 
 func main() {
@@ -32,13 +30,12 @@ func main() {
 
 	//set log debug level
 	if *debug {
-		setLogDebugLevel()
+		os.Setenv("DEBUG", "DEBUG")
 	}
 
 	err := api.LoadChunkserverInfo()
 	if err != nil {
-		log.Errorf("loadChunkserverInfo error: %v", err)
-		os.Exit(-1)
+		log.Fatalf("loadChunkserverInfo error: %v", err)
 	}
 
 	go api.MonitorTicker(5, 30)
@@ -47,9 +44,8 @@ func main() {
 	http.Handle("/", router)
 	log.Infof("listen %s:%d", *serverHost, *serverPort)
 
-	if err := http.ListenAndServe(*serverHost + ":"+ strconv.Itoa(*serverPort), nil); err != nil {
-		log.Errorf("listen err %v", err)
-		os.Exit(-1)
+	if err := http.ListenAndServe(*serverHost+":"+strconv.Itoa(*serverPort), nil); err != nil {
+		log.Fatalf("listen error: %v", err)
 	}
 }
 
@@ -69,8 +65,4 @@ func initRouter() *mux.Router {
 
 	router.NotFoundHandler = http.HandlerFunc(util.NotFoundHandle)
 	return router
-}
-
-func setLogDebugLevel() {
-	os.Setenv("DEBUG", "DEBUG")
 }

@@ -1,32 +1,32 @@
 package chunkserver
 
 import (
-	"io"
-	"fmt"
-	"encoding/binary"
 	"bytes"
+	"encoding/binary"
+	"fmt"
 	"github.com/jcloudpub/speedy/imageserver/meta"
-	"github.com/jcloudpub/speedy/imageserver/util/log"
+	"github.com/jcloudpub/speedy/logs"
+	"io"
 )
 
 const (
-	RW_STATUS = 1
-	RO_STATUS = 2
+	RW_STATUS  = 1
+	RO_STATUS  = 2
 	ERR_STATUS = 3
 
 	GLOBAL_NORMAL_STATUS = 0
-	GLOBAL_READ_STAUS = 8
+	GLOBAL_READ_STAUS    = 8
 )
 
 type ChunkServer struct {
-	GroupId int32
-	Ip string
-	Port int64
-	Status int8
+	GroupId        int32
+	Ip             string
+	Port           int64
+	Status         int8
 	GlobalStatus   int8
 	TotalFreeSpace int64
-	MaxFreeSpace int64
-	PendingWrites	int
+	MaxFreeSpace   int64
+	PendingWrites  int
 	WritingCount   int
 }
 
@@ -35,9 +35,10 @@ type ChunkServerGroups struct {
 }
 
 var (
-	PUT uint8 = 0x00
-	GET uint8 = 0x01
+	PUT    uint8 = 0x00
+	GET    uint8 = 0x01
 	DELETE uint8 = 0x02
+	PING   uint8 = 0x0A
 )
 
 func (csgs *ChunkServerGroups) GetChunkServerGroup(groupId string) ([]ChunkServer, bool) {
@@ -45,8 +46,42 @@ func (csgs *ChunkServerGroups) GetChunkServerGroup(groupId string) ([]ChunkServe
 	return group, ok
 }
 
+func (csgs *ChunkServerGroups) Print() {
+	for key, chunkserverArr := range csgs.GroupMap {
+		if len(chunkserverArr) != 0 {
+			log.Infof("========== groupId: %s ========== ", key)
+			for _, chunkserver := range chunkserverArr {
+				log.Infof("%v", chunkserver)
+			}
+		}
+	}
+}
+
 func (csi *ChunkServer) HostInfoEqual(another *ChunkServer) bool {
 	return csi.Ip == another.Ip && csi.Port == another.Port
+}
+
+func (cs *ChunkServer) Ping(conn *PooledConn) error {
+	output := new(bytes.Buffer)
+	header := make([]byte, 6)
+	binary.Write(output, binary.BigEndian, PING)
+	binary.Write(output, binary.BigEndian, uint32(0))
+
+	_, err := conn.Write(output.Bytes())
+	if err != nil {
+		return err
+	}
+
+	_, err = io.ReadFull(conn.br, header)
+	if err != nil {
+		return err
+	}
+
+	if header[0] != PING || header[1] != 0 {
+		return fmt.Errorf("ping %s:%d error, header[0]:%d, header[1]:%d", cs.Ip, cs.Port, uint8(header[0]), uint8(header[1]))
+	}
+
+	return nil
 }
 
 func (cs *ChunkServer) PutData(data []byte, conn *PooledConn, fileId uint64) error {
@@ -54,7 +89,7 @@ func (cs *ChunkServer) PutData(data []byte, conn *PooledConn, fileId uint64) err
 	header := make([]byte, HEADERSIZE)
 
 	binary.Write(output, binary.BigEndian, PUT)
-	binary.Write(output, binary.BigEndian, uint32(len(data) + 2 + 8))
+	binary.Write(output, binary.BigEndian, uint32(len(data)+2+8))
 	binary.Write(output, binary.BigEndian, uint16(cs.GroupId))
 	binary.Write(output, binary.BigEndian, uint64(fileId))
 
@@ -90,7 +125,7 @@ func (cs *ChunkServer) GetData(miv *meta.MetaInfoValue, conn *PooledConn) ([]byt
 	binary.Write(output, binary.BigEndian, uint16(miv.GroupId))
 	binary.Write(output, binary.BigEndian, uint64(miv.FileId))
 
-	_, err := conn.Conn.Write(output.Bytes())
+	_, err := conn.Write(output.Bytes())
 	if err != nil {
 		fmt.Errorf("write socket error %s\n", err)
 		return nil, err
@@ -135,7 +170,7 @@ func parseUint32(data []byte) (uint32, error) {
 	return x, nil
 }
 
-func parseUint8(data []byte)(uint8, error) {
+func parseUint8(data []byte) (uint8, error) {
 	buf := bytes.NewBuffer(data)
 	var x uint8
 	err := binary.Read(buf, binary.BigEndian, &x)
