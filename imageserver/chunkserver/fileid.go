@@ -40,7 +40,8 @@ func (fids *Fids) ReSet(start, end uint64) {
 	}
 }
 
-func (fids *Fids) Merge(start uint64, end uint64, wait bool) { //[start, end)
+//[start,end)
+func (fids *Fids) Merge(start uint64, end uint64, wait bool) {
 	log.Debugf("merge begin, start:%d, end:%d, wait: %s", start, end, wait)
 
 	if !wait {

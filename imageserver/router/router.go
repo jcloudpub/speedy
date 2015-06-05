@@ -150,7 +150,8 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(chunkServers) == 0 { //TODO need check, num of chunkserver >= 2
+	//TODO need check, num of chunkserver >= 2
+	if len(chunkServers) == 0 {
 		log.Errorf("select ChunkServerGroup error, len(chunkServers) == 0")
 		s.responseResult(nil, http.StatusInternalServerError, fmt.Errorf("select ChunkServerGroup error"), w)
 		return
@@ -189,7 +190,6 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//ch := make(chan string, len(chunkServers))
 	ch := make(chan string, normal)
 	for i := 0; i < len(chunkServers); i++ {
 		if chunkServers[i].Status == chunkserver.RW_STATUS {
@@ -211,7 +211,6 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 	metaInfo.Value.FileId = fileId
 	metaInfo.Value.GroupId = uint16(chunkServers[0].GroupId)
 
-	//err = meta.StoreMetaInfo(metaInfo)
 	err = s.metaDriver.StoreMetaInfo(metaInfo)
 	if err != nil {
 		log.Errorf("store metaInfo error: %s", err)
