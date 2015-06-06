@@ -62,8 +62,8 @@ static void spy_reset_client_connection(spy_connection_t *conn)
 	spy_remove_file_event(server.event_loop, conn->fd, AE_WRITABLE);
 
 	// reset request&&rsp_body buffer and take mem blocks back to free list
-	spy_rw_buffer_reset(&conn->request, 1);
-	spy_rw_buffer_reset(&conn->rsp_body, 1);
+	spy_rw_buffer_reset(&conn->request);
+	spy_rw_buffer_reset(&conn->rsp_body);
 
 	conn->sentlen   = 0;
 	conn->error     = 0;
@@ -155,8 +155,8 @@ static void spy_send_response_if_needed(spy_connection_t *conn)
 static void spy_free_client_connection(spy_connection_t *conn)
 {
 	// take mem blocks back to free list
-	spy_rw_buffer_reset(&conn->request, 1);
-	spy_rw_buffer_reset(&conn->rsp_body, 1);
+	spy_rw_buffer_reset(&conn->request);
+	spy_rw_buffer_reset(&conn->rsp_body);
 
 	if (conn->fd) {
 		close(conn->fd);
@@ -284,7 +284,7 @@ static void spy_write_file_done(spy_work_t *work)
 		list_move_tail(&chunk->c_list, &server.chunks);
 	}
 
-	//spy_rw_buffer_reset(&conn->request, 1);
+	//spy_rw_buffer_reset(&conn->request);
 
 	if (io_job->retcode != 0) {
 		conn->error = WRITE_ERROR;

@@ -66,41 +66,30 @@ int spy_rw_buffer_expand(spy_rw_buffer_t *buffer)
 	return 0;
 }
 
-void spy_rw_buffer_reset(spy_rw_buffer_t *buffer, int release_mem_blocks)
+void spy_rw_buffer_reset(spy_rw_buffer_t *buffer)
 {
 	spy_mem_block_t *mem_block;
 
 	assert(buffer);
 
+	while (!list_empty(&buffer->mem_blocks)) {
+		mem_block = list_first_entry(&buffer->mem_blocks,
+									 spy_mem_block_t, list);
+		list_move(&mem_block->list, &server.free_mem_blocks);
+
+		server.mem_blocks_used--;
+	}
+
+
 	buffer->read_pos        = 0;
 	buffer->read_base       = 0;
 	buffer->write_pos       = 0;
 	buffer->write_base      = 0;
+	buffer->cap             = 0;
 
-	if (release_mem_blocks) {
-		while (!list_empty(&buffer->mem_blocks)) {
-			mem_block = list_first_entry(&buffer->mem_blocks,
-						spy_mem_block_t, list);
-			list_move(&mem_block->list, &server.free_mem_blocks);
+	buffer->read_block      = NULL;
+	buffer->write_block     = NULL;
 
-			server.mem_blocks_used --;
-		}
-
-		buffer->cap = 0;
-	}
-
-	if (list_empty(&buffer->mem_blocks)) {
-		buffer->read_block  = NULL;
-		buffer->write_block = NULL;
-
-		return;
-	}
-
-	mem_block = list_first_entry(&buffer->mem_blocks, 
-				spy_mem_block_t, list);
-
-	buffer->read_block  = mem_block;
-	buffer->write_block = mem_block;
 }
 
 void spy_rw_buffer_reset_read(spy_rw_buffer_t *buffer, size_t pos)

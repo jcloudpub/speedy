@@ -29,8 +29,7 @@ void spy_rw_buffer_init(spy_rw_buffer_t *buffer);
 int spy_rw_buffer_expand(spy_rw_buffer_t *buffer);
 
 // reset read && write
-// if realease_mem_blocks == 1, release mem_blocks to free list
-void spy_rw_buffer_reset(spy_rw_buffer_t *buffer, int release_mem_blocks);
+void spy_rw_buffer_reset(spy_rw_buffer_t *buffer);
 
 // reset read to the specified position(for repeated read)
 void spy_rw_buffer_reset_read(spy_rw_buffer_t *buffer, size_t pos);
