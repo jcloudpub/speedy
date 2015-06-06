@@ -23,14 +23,9 @@ void spy_rw_buffer_init(spy_rw_buffer_t *buffer)
 
 int spy_rw_buffer_expand(spy_rw_buffer_t *buffer)
 {
-	spy_mem_block_t *mem_block;
+	spy_mem_block_t *mem_block = NULL;
 
-	if (!list_empty(&server.free_mem_blocks)) {
-		mem_block = list_first_entry(&server.free_mem_blocks, 
-									spy_mem_block_t, list);
-
-		list_del_init(&mem_block->list);
-	} else {
+	if (list_empty(&server.free_mem_blocks)) {
 		if (server.mem_blocks_alloc >= server.mem_blocks_alloc_limit) {
 			spy_log(ERROR, "mem block reach limit");
 			return -1;
@@ -43,17 +38,21 @@ int spy_rw_buffer_expand(spy_rw_buffer_t *buffer)
 		}
 
 		INIT_LIST_HEAD(&mem_block->list);
-
 		mem_block->size = MEM_BLOCK_SIZE - sizeof(spy_mem_block_t);
-
-		server.mem_blocks_alloc ++;
+		
+		server.mem_blocks_alloc++;
+	} else {
+		mem_block = list_first_entry(&server.free_mem_blocks, 
+									spy_mem_block_t, list);
+	
+		list_del_init(&mem_block->list);	
 	}
 
-	assert (mem_block);
+	assert(mem_block);
 
 	// first mem block
 	if (list_empty(&buffer->mem_blocks)) {
-		assert (!buffer->read_block && !buffer->write_block);
+		assert(!buffer->read_block && !buffer->write_block);
 
 		buffer->read_block = mem_block;
 		buffer->write_block = mem_block;
@@ -62,7 +61,7 @@ int spy_rw_buffer_expand(spy_rw_buffer_t *buffer)
 	list_add_tail(&mem_block->list, &buffer->mem_blocks);
 	buffer->cap += mem_block->size;
 
-	server.mem_blocks_used ++;
+	server.mem_blocks_used++;
 
 	return 0;
 }
