@@ -48,7 +48,7 @@ It is an another distributed key-value storage, since It's not open-source yet, 
 
 How To Install
 =============
-see [INSTALL](INSTALL) and [USAGE](USAGE.md)
+see [INSTALL](INSTALL.md) and [USAGE](USAGE.md)
 
 Startup sequence
 ================
