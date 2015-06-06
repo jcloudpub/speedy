@@ -80,7 +80,6 @@ void spy_rw_buffer_reset(spy_rw_buffer_t *buffer)
 		server.mem_blocks_used--;
 	}
 
-
 	buffer->read_pos        = 0;
 	buffer->read_base       = 0;
 	buffer->write_pos       = 0;
@@ -89,120 +88,99 @@ void spy_rw_buffer_reset(spy_rw_buffer_t *buffer)
 
 	buffer->read_block      = NULL;
 	buffer->write_block     = NULL;
-
 }
 
 void spy_rw_buffer_reset_read(spy_rw_buffer_t *buffer, size_t pos)
 {
-        spy_mem_block_t *mem_block;
+	spy_mem_block_t *mem_block;
 
-        assert (pos <= buffer->write_pos);
+	assert(pos <= buffer->write_pos);
 
-        buffer->read_block      = NULL;
-        buffer->read_base       = 0;
-        buffer->read_pos        = 0;
+	buffer->read_block = NULL;
+	buffer->read_base  = 0;
+	buffer->read_pos   = 0;
+	
+	if (list_empty(&buffer->mem_blocks)) {
+		assert(pos == 0);
+		return;
+	}
 
-        if (list_empty(&buffer->mem_blocks)) {
-                assert (pos == 0);
-                return;
-        }
-
-        mem_block = list_first_entry(&buffer->mem_blocks, spy_mem_block_t, list);
-
-        while (buffer->read_base + mem_block->size < pos) {
-                buffer->read_base += mem_block->size;
-
-                mem_block = list_next_entry(mem_block, list);
-        }
-
-        buffer->read_block      = mem_block;
-        buffer->read_pos        = pos;
+	mem_block = list_first_entry(&buffer->mem_blocks, spy_mem_block_t, list);
+	
+	while (buffer->read_base + mem_block->size < pos) {
+		buffer->read_base += mem_block->size;
+		
+		mem_block = list_next_entry(mem_block, list);
+	}
+	
+	buffer->read_block = mem_block;
+	buffer->read_pos   = pos;
 }
 
 /*
  * get the next readable area.
  * return -1 mean no data for read, return 0 mean there is data for read.
  */
-int spy_rw_buffer_next_readable
-(
-        spy_rw_buffer_t *buffer,
-        char **buf /*out*/,
-        size_t *size /*out*/
-)
+int spy_rw_buffer_next_readable(spy_rw_buffer_t *buffer,
+								char **buf, size_t *size)
 {
-        spy_mem_block_t *mem_block;
+	spy_mem_block_t *mem_block;
 
-        // no data for read
-        if (buffer->read_pos == buffer->write_pos)
-                return -1;
-
-        assert (buffer->read_block);
-
-        // jump to next mem_block
-        if (buffer->read_base + buffer->read_block->size 
-                        == buffer->read_pos) {
-                
-                mem_block = list_next_entry(buffer->read_block, list);
-                // assert ( (void*)mem_block != (void*)&buffer->mem_blocks );
-
-                buffer->read_base   += buffer->read_block->size;
-                buffer->read_block  = mem_block;
-        }
-
-        *buf = buffer->read_block->buf + buffer->read_pos - buffer->read_base;
-        *size = MIN(buffer->read_base + 
-                        buffer->read_block->size - 
-                        buffer->read_pos, 
-                        buffer->write_pos - 
-                        buffer->read_pos);
-
-        return 0;
+	// no data for read
+	if (buffer->read_pos == buffer->write_pos)
+		return -1;
+	
+	assert(buffer->read_block);
+	
+	// jump to next mem_block
+	if (buffer->read_base + buffer->read_block->size 
+		== buffer->read_pos) {
+        
+		mem_block = list_next_entry(buffer->read_block, list);
+		// assert ( (void*)mem_block != (void*)&buffer->mem_blocks );
+		
+		buffer->read_base  += buffer->read_block->size;
+		buffer->read_block = mem_block;
+	}
+	
+	*buf = buffer->read_block->buf + buffer->read_pos - buffer->read_base;
+	*size = MIN(buffer->read_base + buffer->read_block->size - 
+				buffer->read_pos, buffer->write_pos - buffer->read_pos);
+	
+	return 0;
 }
 
 /*
  * get the next writeable area.
  * return -1 mean no place for write, return 0 mean there is place for write
  */
-int spy_rw_buffer_next_writeable
-(
-        spy_rw_buffer_t *buffer,
-        char **buf /*out*/,
-        size_t *size /*out*/
-)
+int spy_rw_buffer_next_writeable(spy_rw_buffer_t *buffer, char **buf,
+								 size_t *size)
 {
-        spy_mem_block_t *mem_block;
+	spy_mem_block_t *mem_block;
 
-        // no palce for write
-        if (buffer->write_pos == buffer->cap)
-                return -1;
-
-        // jump to next mem_block
-        if (buffer->write_base + buffer->write_block->size 
-                        == buffer->write_pos) {
-                
-                mem_block = list_next_entry(buffer->write_block, list);
-
-                buffer->write_base      += buffer->write_block->size;
-                buffer->write_block     = mem_block;
-        }
+	// no palce for write
+	if (buffer->write_pos == buffer->cap)
+		return -1;
+	
+	// jump to next mem_block
+	if (buffer->write_base + buffer->write_block->size 
+		== buffer->write_pos) {
         
-        *buf = buffer->write_block->buf + 
-                buffer->write_pos - 
-                buffer->write_base;
-        *size = buffer->write_base + 
-                buffer->write_block->size - 
-                buffer->write_pos;
-
-        return 0;
+		mem_block = list_next_entry(buffer->write_block, list);
+		
+		buffer->write_base      += buffer->write_block->size;
+		buffer->write_block     = mem_block;
+	}
+        
+	*buf = buffer->write_block->buf + buffer->write_pos - buffer->write_base;
+	*size = buffer->write_base + buffer->write_block->size - buffer->write_pos;
+	
+	return 0;
 }
 
 /* return bytes read */
-size_t spy_rw_buffer_read_n
-(
-	spy_rw_buffer_t *buffer,
-	char *buf,
-	size_t size /*n*/
-)
+size_t spy_rw_buffer_read_n(spy_rw_buffer_t *buffer, char *buf, size_t size)
 {
 	spy_mem_block_t *mem_block;
 
@@ -211,23 +189,24 @@ size_t spy_rw_buffer_read_n
 	size_t readable = 0, nread = 0;
 
 	while (left > 0 && data_len > 0) {
-
 		// jump to next mem block
 		if (buffer->read_base + buffer->read_block->size == 
                                 buffer->read_pos) {
 
 			mem_block = list_next_entry(buffer->read_block, list);
 
-			buffer->read_base       += buffer->read_block->size;
-			buffer->read_block      = mem_block;
+			buffer->read_base  += buffer->read_block->size;
+			buffer->read_block  = mem_block;
 		}
 
 		// current block readable size
 		readable = MIN(buffer->write_pos, buffer->read_base + buffer->read_block->size) 
-                                - buffer->read_pos;
+			- buffer->read_pos;
 
 		nread = MIN(readable, left);
-		memcpy((void*)(buf + size - left), (void*)(buffer->read_block->buf + buffer->read_pos - buffer->read_base), nread);
+		memcpy((void*)(buf + size - left), 
+			   (void*)(buffer->read_block->buf + buffer->read_pos - buffer->read_base), 
+			   nread);
 
 		buffer->read_pos += nread;
 		data_len         -= nread;
@@ -238,12 +217,7 @@ size_t spy_rw_buffer_read_n
 }
 
 /* return bytes write */
-size_t spy_rw_buffer_write_n
-(
-	spy_rw_buffer_t *buffer,
-	char *buf,
-	size_t size /*n*/
-)
+size_t spy_rw_buffer_write_n(spy_rw_buffer_t *buffer, char *buf, size_t size)
 {
 	char *writeable;
 	size_t len, nwrite, left = size;
@@ -261,4 +235,3 @@ size_t spy_rw_buffer_write_n
 
 	return size - left;
 }
-

@@ -57,56 +57,6 @@
 #  define MOD4(a) a %= BASE
 #endif
 
-/*
-uint64_t spy_buffer_adler32(uint64_t adler, spy_rw_buffer_t *buffer, size_t len)
-{
-	char *data;
-	size_t data_len, i, nread, left, read_pos = buffer->read_pos;
-	uint64_t sum2;
-
-	sum2 = (adler >> 16) & 0xffff;
-	adler &= 0xffff;
-
-	assert (buffer->write_pos - buffer->read_pos >= len);
-
-	left = len;
-	while (left > 0) {
-		assert (spy_rw_buffer_next_readable(buffer, (char**)(&data), &data_len) == 0); 
-
-		nread = data_len > left ? left : data_len;
-
-		for (i = 0; i < nread; i++) {
-			adler = (adler + data[i]) % BASE;
-			sum2 = (sum2 + adler) % BASE;
-		}
-
-		left -= nread;
-		buffer->read_pos += nread;
-	}
-
-	spy_log(ERROR, "buffer adler32. adler:%lu, sum2:%lu\n", adler, sum2);
-
-	spy_rw_buffer_reset_read(buffer, read_pos);
-
-	return (sum2 << 16) | adler;
-}
-
-uint64_t spy_simple_adler32(uint64_t adler, uint8_t *data, size_t len)
-{
-	size_t i;
-
-	uint64_t sum2 = (adler >> 16) & 0xffff;
-	adler &= adler & 0xffff;
-
-	for (i = 0; i < len; i++) {
-		adler = (adler + data[i]) % BASE;
-		sum2 = (sum2 + adler) % BASE;
-	}
-
-	return (sum2 << 16) | adler;
-}
-*/
-
 uint64_t spy_buffer_adler32(uint64_t adler, spy_rw_buffer_t *buffer, size_t len)
 {
 	uint8_t *data;
