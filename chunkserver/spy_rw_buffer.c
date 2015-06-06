@@ -42,8 +42,8 @@ int spy_rw_buffer_expand(spy_rw_buffer_t *buffer)
 		
 		server.mem_blocks_alloc++;
 	} else {
-		mem_block = list_first_entry(&server.free_mem_blocks, 
-									spy_mem_block_t, list);
+		mem_block = list_first_entry(&server.free_mem_blocks,
+                                            spy_mem_block_t, list);
 	
 		list_del_init(&mem_block->list);	
 	}
@@ -74,7 +74,7 @@ void spy_rw_buffer_reset(spy_rw_buffer_t *buffer)
 
 	while (!list_empty(&buffer->mem_blocks)) {
 		mem_block = list_first_entry(&buffer->mem_blocks,
-									 spy_mem_block_t, list);
+                                            spy_mem_block_t, list);
 		list_move(&mem_block->list, &server.free_mem_blocks);
 
 		server.mem_blocks_used--;
@@ -188,9 +188,7 @@ size_t spy_rw_buffer_read_n(spy_rw_buffer_t *buffer, char *buf, size_t size)
 
 	while (left > 0 && data_len > 0) {
 		// jump to next mem block
-		if (buffer->read_base + buffer->read_block->size == 
-                                buffer->read_pos) {
-
+		if (buffer->read_base + buffer->read_block->size == buffer->read_pos) {
 			mem_block = list_next_entry(buffer->read_block, list);
 
 			buffer->read_base  += buffer->read_block->size;
@@ -202,8 +200,8 @@ size_t spy_rw_buffer_read_n(spy_rw_buffer_t *buffer, char *buf, size_t size)
 			- buffer->read_pos;
 
 		nread = MIN(readable, left);
-		memcpy((void*)(buf + size - left), 
-			   (void*)(buffer->read_block->buf + buffer->read_pos - buffer->read_base), 
+		memcpy((void*)(buf + size - left),
+			   (void*)(buffer->read_block->buf + buffer->read_pos - buffer->read_base),
 			   nread);
 
 		buffer->read_pos += nread;
