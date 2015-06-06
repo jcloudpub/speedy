@@ -121,8 +121,7 @@ void spy_rw_buffer_reset_read(spy_rw_buffer_t *buffer, size_t pos)
  * get the next readable area.
  * return -1 mean no data for read, return 0 mean there is data for read.
  */
-int spy_rw_buffer_next_readable(spy_rw_buffer_t *buffer,
-								char **buf, size_t *size)
+int spy_rw_buffer_next_readable(spy_rw_buffer_t *buffer, char **buf, size_t *size)
 {
 	spy_mem_block_t *mem_block;
 
@@ -154,8 +153,7 @@ int spy_rw_buffer_next_readable(spy_rw_buffer_t *buffer,
  * get the next writeable area.
  * return -1 mean no place for write, return 0 mean there is place for write
  */
-int spy_rw_buffer_next_writeable(spy_rw_buffer_t *buffer, char **buf,
-								 size_t *size)
+int spy_rw_buffer_next_writeable(spy_rw_buffer_t *buffer, char **buf, size_t *size)
 {
 	spy_mem_block_t *mem_block;
 
