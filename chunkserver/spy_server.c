@@ -171,10 +171,6 @@ static void spy_free_client_connection(spy_connection_t *conn)
 
 static void spy_reply_body(spy_connection_t *conn)
 {
-	// reply body has ready (conn->rsp_body)
-
-
-	// send
 	spy_send_response_if_needed(conn);
 }
 

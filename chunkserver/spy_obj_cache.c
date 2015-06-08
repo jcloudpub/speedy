@@ -10,7 +10,7 @@ void spy_init_io_jobs(size_t max_io_jobs)
 
 	assert (max_io_jobs > 0);
 
-	io_job = (spy_io_job_t *)malloc(max_io_jobs * sizeof(spy_io_job_t));
+	io_job = (spy_io_job_t *)calloc(max_io_jobs, sizeof(spy_io_job_t));
 	assert (io_job);
 
 	while (max_io_jobs--) {
