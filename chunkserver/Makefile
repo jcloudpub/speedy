@@ -2,7 +2,7 @@ CC = gcc
 DEBUG = -g -rdynamic -ggdb -O0
 CFLAGS = -D_GNU_SOURCE $(DEBUG)
 
-SRV_OBJ = spy_event.o spy_utils.o spy_store.o spy_adler32.o spy_work.o spy_log.o spy_shm.o spy_mem_block.o spy_rw_buffer.o spy_obj_cache.o spy_agent.o
+SRV_OBJ = spy_event.o spy_utils.o spy_store.o spy_adler32.o spy_work.o spy_log.o spy_mem_block.o spy_rw_buffer.o spy_obj_cache.o spy_agent.o
 
 spy_server: $(SRV_OBJ) spy_server.c
 	$(CC) -g -O0 -pthread -o $@ $^

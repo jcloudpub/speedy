@@ -80,14 +80,14 @@ void spy_rw_buffer_reset(spy_rw_buffer_t *buffer)
 		server.mem_blocks_used--;
 	}
 
-	buffer->read_pos        = 0;
-	buffer->read_base       = 0;
-	buffer->write_pos       = 0;
-	buffer->write_base      = 0;
-	buffer->cap             = 0;
+	buffer->read_pos    = 0;
+	buffer->read_base   = 0;
+	buffer->write_pos   = 0;
+	buffer->write_base  = 0;
+	buffer->cap         = 0;
 
-	buffer->read_block      = NULL;
-	buffer->write_block     = NULL;
+	buffer->read_block  = NULL;
+	buffer->write_block = NULL;
 }
 
 void spy_rw_buffer_reset_read(spy_rw_buffer_t *buffer, size_t pos)
