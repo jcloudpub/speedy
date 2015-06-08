@@ -13,7 +13,6 @@ spy_adler32.o: spy_adler32.c
 spy_work.o: spy_work.h spy_work.c
 spy_event.o: spy_event.h spy_event.c
 spy_log.o: spy_log.h spy_log.c
-spy_shm.o: spy_shm.h spy_shm.c
 spy_mem_block.o: spy_mem_block.h spy_mem_block.c
 spy_rw_buffer.o: spy_rw_buffer.h spy_rw_buffer.c
 spy_obj_cache.o: spy_obj_cache.h spy_obj_cache.c

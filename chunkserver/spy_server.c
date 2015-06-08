@@ -879,8 +879,6 @@ static void spy_read_handler(aeEventLoop *el, int fd, void *priv, int mask)
 	}
 
 	if (nread == 0) {
-		//spy_log(DEBUG, "peer close connection");
-
 		spy_free_client_connection(conn);
 		return;
 	}
