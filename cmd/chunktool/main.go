@@ -24,6 +24,8 @@ const (
 	opcodeKillPdWr      = 30
 	opcodeQueryIoStatus = 31
 	opcodeQeuryDetails  = 32
+
+	opcodeDumpChunk     = 40
 )
 
 /*
@@ -288,6 +290,71 @@ func (c *SpyClient) killPendingWrites(s uint) {
 	fmt.Println("kill pending OK:")
 }
 
+func (c *SpyClient) dumpChunk(name string, target string) {
+	if len(name) == 0 || len(target) == 0 {
+		fmt.Println("chunk name and target name must be given")
+		return
+	}
+
+	output := new(bytes.Buffer)
+	
+	binary.Write(output, binary.BigEndian, uint8(opcodeDumpChunk))
+	binary.Write(output, binary.BigEndian, uint32(len(name)))
+
+	output.WriteString(name)
+
+	_, err := c.Conn.Write(output.Bytes())
+	if err != nil {
+		fmt.Println("write socket error:", err)
+		return
+	}
+
+	header := make([]byte, 6)
+	if _, err := io.ReadFull(c.rb, header); err != nil {
+		fmt.Println("read socket header error:", err)
+		return
+	}
+
+	if header[0] != opcodeDumpChunk || header[1] != 0 {
+		fmt.Println("dump chunk failed:", header[1])
+		return
+	}
+
+	bodyLen := binary.BigEndian.Uint32(header[2:])
+	if bodyLen <= 0 {
+		fmt.Println("dump chunk resp invalid, bodyLen = ", bodyLen)
+		return
+	}
+
+	data := make([]byte, 4096)
+	f, err := os.Create(target)
+
+	if err != nil {
+		fmt.Println("Error creating file\n")
+		return
+	}
+
+	defer f.Close()
+
+	for {
+		n, err := c.Conn.Read(data)
+		if err != nil {
+			if err != io.EOF {
+				fmt.Println("socket read error\n")
+			}
+			break;
+		}
+
+		_, err = f.Write(data[:n])
+
+		if err != nil {
+			fmt.Println("Error writing file\n")
+			break;
+		}
+
+	}
+}
+
 func (c *SpyClient) checkDisk(s uint) {
 	output := new(bytes.Buffer)
 
@@ -418,7 +485,8 @@ func main() {
 	var data = flag.String("d", "test_data", "file data")
 	var cmd = flag.String("c", "upload", "command")
 	var outFile = flag.String("o", "", "outFile")
-	//	var status = flag.Uint("t", 0, "set status")
+	var chunkName = flag.String("n", "", "chunk name")
+	var targetName = flag.String("t", "", "target name")
 
 	flag.Parse()
 
@@ -447,6 +515,8 @@ func main() {
 		client.checkDisk(*sid)
 	} else if *cmd == "querydetail" {
 		client.queryDetails(*sid)
+	} else if *cmd == "dumpchunk" {
+		client.dumpChunk(*chunkName, *targetName)
 	}
 
 	client.Conn.Close()
