@@ -22,7 +22,7 @@
 #include "spy_utils.h"
 #include "spy_rw_buffer.h"
 
-static spy_chunk_t *spy_alloc_chunk(int fd, uint64_t chunk_id);
+static spy_chunk_t *spy_alloc_chunk(int fd, uint64_t chunk_id, char *path, uint32_t size);
 
 static void spy_add_chunk(spy_chunk_t *chunk)
 {
@@ -287,6 +287,7 @@ static void spy_setup_chunk(char *chunk_path)
 	int fd, nread, result, fpos = 0, in = 0, complete = 0;
 	char sb_buf[SUPERBLOCK_SIZE], *block;
 	spy_chunk_t *chunk;
+	struct stat st;
 	spy_file_parser_t *parser;
 
 	/*
@@ -296,7 +297,9 @@ static void spy_setup_chunk(char *chunk_path)
 	fd = open(chunk_path, O_RDWR, 0644);
 	assert(fd);
 
-	chunk = spy_alloc_chunk(fd, 0);
+	assert(fstat(fd, &st) == 0);
+
+	chunk = spy_alloc_chunk(fd, 0, chunk_path, st.st_size);
 
 	do {
 		nread = read(fd, sb_buf, SUPERBLOCK_SIZE);
@@ -331,7 +334,7 @@ static void spy_setup_chunk(char *chunk_path)
 	spy_add_chunk(chunk);
 }
 
-static spy_chunk_t *spy_alloc_chunk(int fd, uint64_t chunk_id)
+static spy_chunk_t *spy_alloc_chunk(int fd, uint64_t chunk_id, char *path, uint32_t size)
 {
 	spy_chunk_t *chunk;
 
@@ -339,9 +342,11 @@ static spy_chunk_t *spy_alloc_chunk(int fd, uint64_t chunk_id)
 	assert(chunk);
 
 	chunk->fd             = fd;
+	chunk->path           = strdup(path);
 	chunk->chunk_id       = chunk_id;
 	chunk->files_alloc    = 0;
 	chunk->files_count    = 0;
+	chunk->file_size      = size;
 	chunk->avail_space    = config.chunk_size - SUPERBLOCK_SIZE;
 	chunk->current_offset = SUPERBLOCK_SIZE;
 	
@@ -398,6 +403,47 @@ int spy_write_chunk_superblock(spy_chunk_t *chunk)
 int spy_flush_and_sync_chunk(spy_chunk_t *chunk)
 {
 	return fsync(chunk->fd);
+}
+
+void WORKER_FN spy_dump_chunkfile(spy_work_t *wk)
+{
+	
+	off_t offset = 0;
+	unsigned char header[6];
+	spy_chunk_t *chunk;
+	spy_connection_t *conn;
+	spy_dump_job_t *dump_job;
+	ssize_t n, sent = 0, total = 6;
+
+	dump_job = container_of(wk, spy_dump_job_t, work);
+	conn     = dump_job->conn;
+	chunk    = dump_job->chunk;
+
+	dump_job->retcode = 0;
+
+	spy_mach_write_to_1(conn->rsp_header, conn->opcode);
+	spy_mach_write_to_1(conn->rsp_header + 1, 0);
+	spy_mach_write_to_4(conn->rsp_header + 2, chunk->file_size);
+
+	while (total > 0) {
+		n = write(conn->fd, conn->rsp_header + sent, total - sent);
+		if (n < 0) {
+			dump_job->retcode = -1;
+			return;
+		}
+
+		sent  += n;
+		total -= n;
+	}
+
+	while (offset != chunk->file_size) {   
+		n = sendfile64(conn->fd, chunk->fd, &offset, chunk->file_size - offset);
+		if (n < 0) {
+			spy_log(ERROR, "sendfile error, err:%s", strerror(errno));
+			dump_job->retcode = -1;		
+			return;
+		}
+	}
 }
 
 /*
@@ -608,7 +654,6 @@ void WORKER_FN spy_write_file(spy_work_t *wk)
 			spy_log(ERROR, "sb write fsync failed, err %s", strerror(errno));
 		}
 	}
-	
 
 	return;
 
@@ -643,7 +688,7 @@ int spy_create_chunk()
 		return -1;
 	}
 
-	chunk = spy_alloc_chunk(fd, chunk_id);
+	chunk = spy_alloc_chunk(fd, chunk_id, chunk_path, config.chunk_size);
 	spy_add_chunk(chunk);
 
 	return spy_write_chunk_superblock(chunk);

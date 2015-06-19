@@ -206,7 +206,8 @@ uint32_t spy_mach_read_variant_4(byte *b, uint32_t *value)
 	return p - b + 1;
 }
 
-int spy_string_ends_with(const char *str, const char *suffix) {
+int spy_string_ends_with(const char *str, const char *suffix) 
+{
 	size_t lstr, lsuffix;
 
 	if (!str || !suffix) {

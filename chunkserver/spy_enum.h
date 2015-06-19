@@ -30,7 +30,9 @@ typedef enum {
 
 	OPCODE_KILL_PD_WR      = 30, // kill pending writes
 	OPCODE_QUERY_IO_STATUS,      // query current reading count, writing count, pending writes
-	OPCODE_QUERY_DETAIL_INFOS    // query detail infos
+	OPCODE_QUERY_DETAIL_INFOS,   // query detail infos
+
+	OPCODE_DUMP_CHUNK      = 40
 } spy_opcode_t;
 
 typedef enum {

@@ -47,6 +47,7 @@ const struct option server_long_options[] = {
 	{NULL, 0, NULL, 0}
 };
 //forward declare
+static int spy_set_blocking(int fd, int block);
 static void spy_send_response_if_needed(spy_connection_t *conn);
 static void spy_free_client_connection(spy_connection_t *conn);
 static void spy_reply_body(spy_connection_t *conn);
@@ -646,6 +647,91 @@ static void spy_lookup_file_index(uint64_t fid,
 	}
 }
 
+static void spy_dump_chunkfile_done(spy_work_t *work)
+{
+	int retcode, sent_header;
+	spy_dump_job_t *dump_job;
+	spy_connection_t *conn;
+
+	dump_job    = container_of(work, spy_dump_job_t, work);	
+	conn        = dump_job->conn;
+	retcode     = dump_job->retcode;
+
+	free(dump_job);
+
+	if (retcode != 0) {
+		spy_free_client_connection(conn);
+		return;
+	}
+
+	if (spy_set_blocking(conn->fd, 0)) {
+		spy_log(ERROR, "dump chunk done, set socket nonblock failed, %s", strerror(errno));
+		spy_free_client_connection(conn);
+
+		return;
+	}
+
+	spy_reset_client_connection(conn);	
+}
+
+static void spy_dump_chunk(spy_connection_t *conn)
+{
+	int r;
+	size_t n;
+	spy_chunk_t *chunk = NULL, *tmp;
+	spy_dump_job_t *dump_job = NULL;
+	char buf[CHUNK_FILENAME_LEN_MAX + 1];
+
+	dump_job = calloc(1, sizeof(spy_dump_job_t));
+	assert(dump_job);
+
+	if (conn->body_len >= CHUNK_FILENAME_LEN_MAX) {
+		spy_log(ERROR, "request dump chunk filename length too large, %d", conn->body_len);
+		conn->error    = INTERNAL_ERROR;
+		goto ERROR_REPLY;
+	}
+
+	n = spy_rw_buffer_read_n(&conn->request, dump_job->chunk_name, conn->body_len);
+	assert (n == conn->body_len);
+
+	r = sprintf(buf, "/%s", dump_job->chunk_name);
+	assert (r > 0);
+
+	list_for_each_entry(tmp, &server.chunks, c_list) {
+		if (spy_string_ends_with(tmp->path, buf)) {
+			chunk = tmp;
+			break;
+		}
+	}
+
+	if (chunk == NULL) {
+		conn->error = FILE_NOT_FOUND;
+		goto ERROR_REPLY;
+	}
+
+	if (spy_set_blocking(conn->fd, 1)) {
+		spy_log(ERROR, "dump chunk file, set socket block failed, %s", strerror(errno));
+		conn->error    = INTERNAL_ERROR;
+		goto ERROR_REPLY;
+	}
+
+	dump_job->conn      = conn;
+	dump_job->chunk     = chunk;
+	dump_job->work.fn   = spy_dump_chunkfile;
+	dump_job->work.done = spy_dump_chunkfile_done;
+
+	spy_remove_file_event(server.event_loop, conn->fd, AE_READABLE);
+	spy_queue_work(server.wq, &dump_job->work);
+
+	return;
+
+ERROR_REPLY:
+	conn->body_len = 0;
+	conn->state    = SEND_RSP;
+
+	spy_reply_header(conn);	
+}
+
 static void spy_handle_read(spy_connection_t *conn)
 {
 	uint16_t server_id;
@@ -832,6 +918,10 @@ static void spy_process_receive_buffer(spy_connection_t *conn)
 
 		case OPCODE_QUERY_DETAIL_INFOS:
 			spy_query_detail_infos(conn);
+			break;
+
+		case OPCODE_DUMP_CHUNK:
+			spy_dump_chunk(conn);
 			break;
 
 		default:
@@ -1040,6 +1130,27 @@ static void spy_accept_handler(aeEventLoop *el, int fd, void *priv, int mask)
 	}
 	
 	spy_create_client_connection(cfd);
+}
+
+static int spy_set_blocking(int fd, int block)
+{
+    int flags;
+
+    if ((flags = fcntl(fd, F_GETFL)) == -1) {
+        return -1;
+    }
+
+    if (block) {
+		flags &= ~O_NONBLOCK;
+	} else {
+        flags |= O_NONBLOCK;
+	}
+
+    if (fcntl(fd, F_SETFL, flags) == -1) {
+        return -1;
+    }
+
+    return 0;
 }
 
 static int spy_create_listen_socket(int port, char *bind_addr)

@@ -316,7 +316,7 @@ func (c *SpyClient) dumpChunk(name string, target string) {
 	}
 
 	if header[0] != opcodeDumpChunk || header[1] != 0 {
-		fmt.Println("dump chunk failed:", header[1])
+		fmt.Println("dump chunk failed:", header[0])
 		return
 	}
 
@@ -351,7 +351,11 @@ func (c *SpyClient) dumpChunk(name string, target string) {
 			fmt.Println("Error writing file\n")
 			break;
 		}
-
+		
+		bodyLen -= uint32(n)
+		if bodyLen == 0 {
+			break;
+		}		
 	}
 }
 

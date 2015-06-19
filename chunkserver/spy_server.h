@@ -45,7 +45,7 @@ typedef struct {
 
 	spy_rw_buffer_t         request;        // request
 	spy_rw_buffer_t         rsp_body;       // response body
-	char                    rsp_header[RSP_HDR_SIZE]; // response header
+	unsigned char           rsp_header[RSP_HDR_SIZE]; // response header
 	int                     sentlen;
 
 	uint8_t                 opcode;
