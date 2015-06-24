@@ -170,6 +170,7 @@ class Connection(object):
         headers["Fragment-Index"] = str(fragment_index)
         headers["Bytes-Range"] = "%s-%s" % (bytes_range[0], bytes_range[1])
         headers["Is-Last"] = "true" if is_last else "false"
+        headers["Registry-Version"] = "v1"
 
         return conn.post("v1/file", data=data, headers=headers)
 
@@ -199,6 +200,7 @@ class Connection(object):
 
         headers = {}
         headers["Path"] = path
+        headers["Registry-Version"] = "v1"
 
         return conn.delete("v1/file", headers=headers)
 
