@@ -24,9 +24,13 @@ type MetaInfo struct {
 }
 
 type MetaDriver interface {
-	StoreMetaInfo(metaInfo *MetaInfo) error
-	DeleteFileMetaInfo(path string) error
+	StoreMetaInfoV1(metaInfo *MetaInfo) error
+	StoreMetaInfoV2(metaInfo *MetaInfo) error
+	DeleteFileMetaInfoV1(path string) error
+	DeleteFileMetaInfoV2(path string) error
 	GetDirectoryInfo(path string) ([]string, error)
+	GetDescendantPath(path string) ([]string, error)
+	MoveFile(sourcePath, destPath string) error
 	GetFileMetaInfo(path string, detail bool) ([]*MetaInfoValue, error)
 	GetFragmentMetaInfo(path string, index, start, end uint64) (*MetaInfoValue, error)
 }

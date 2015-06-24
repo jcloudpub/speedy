@@ -41,9 +41,9 @@ func InitMeta(metadbIp string, metadbPort int, metadbUser, metadbPassword, metaD
 	return nil
 }
 
-func (db *MysqlDriver) StoreMetaInfo(metaInfo *MetaInfo) error {
+func (db *MysqlDriver) StoreMetaInfoV1(metaInfo *MetaInfo) error {
 	if metaInfo.Value.IsLast && metaInfo.Value.Index == 0 {
-		err := db.DeleteFileMetaInfo(metaInfo.Path)
+		err := db.DeleteFileMetaInfoV1(metaInfo.Path)
 		if err != nil {
 			return err
 		}
@@ -52,6 +52,27 @@ func (db *MysqlDriver) StoreMetaInfo(metaInfo *MetaInfo) error {
 	err := db.HandleDirectory(metaInfo.Path, ADDFILE)
 	if err != nil {
 		return err
+	}
+
+	metaInfoValueJson, err := json.Marshal(metaInfo.Value)
+	if err != nil {
+		return err
+	}
+
+	err = pushList(mysqlDB, metaInfo.Path, string(metaInfoValueJson))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *MysqlDriver) StoreMetaInfoV2(metaInfo *MetaInfo) error {
+	if metaInfo.Value.IsLast && metaInfo.Value.Index == 0 {
+		err := db.DeleteFileMetaInfoV2(metaInfo.Path)
+		if err != nil {
+			return err
+		}
 	}
 
 	metaInfoValueJson, err := json.Marshal(metaInfo.Value)
@@ -110,7 +131,7 @@ func (db *MysqlDriver) HandleDirectory(path string, opcode int16) error {
 	return nil
 }
 
-func (db *MysqlDriver) DeleteFileMetaInfo(path string) error {
+func (db *MysqlDriver) DeleteFileMetaInfoV1(path string) error {
 	err := delList(mysqlDB, path)
 	if err != nil {
 		return err
@@ -122,6 +143,20 @@ func (db *MysqlDriver) DeleteFileMetaInfo(path string) error {
 	}
 
 	return nil
+}
+
+func (db *MysqlDriver) DeleteFileMetaInfoV2(path string) error {
+	err := delList(mysqlDB, path)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *MysqlDriver) MoveFile(sourcePath, destPath string) error {
+	err := updateListKey(mysqlDB, sourcePath, destPath)
+	return err
 }
 
 func (db *MysqlDriver) GetDirectoryInfo(path string) ([]string, error) {
@@ -139,6 +174,20 @@ func (db *MysqlDriver) GetDirectoryInfo(path string) ([]string, error) {
 	return files, nil
 }
 
+func (db *MysqlDriver) GetDescendantPath(path string) ([]string, error) {
+	descendants, err := getDescendantPath(mysqlDB, path)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(descendants) == 0 {
+		log.Infof("[ListDescendant] can not find descendant path for: %s", path)
+	}
+
+	return descendants, nil
+}
+
+//[(Index0, Start0, End0, IsLast0), (Index1, Start1, End1, IsLast1)]
 func (db *MysqlDriver) GetFileMetaInfo(path string, detail bool) ([]*MetaInfoValue, error) {
 	list, err := getList(mysqlDB, path)
 	if err != nil {
@@ -230,6 +279,22 @@ func pushList(db *sql.DB, key, value string) error {
 	return nil
 }
 
+func updateListKey(db *sql.DB, oldKey, newKey string) error {
+	stmt, err := db.Prepare("UPDATE key_list SET list_key=?, md5_key=? WHERE md5_key=?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(newKey, encrypt([]byte(newKey)), encrypt([]byte(oldKey)))
+	if err != nil {
+		return err
+	}
+
+	log.Infof("[updateListKey] oldKey: %s, newKey: %s, oldmd5: %s, newmd5: %s", oldKey, newKey, encrypt([]byte(newKey)), encrypt([]byte(oldKey)))
+	return nil
+}
+
 func delList(db *sql.DB, key string) error {
 	stmt, err := db.Prepare("DELETE FROM key_list WHERE md5_key = ?")
 	if err != nil {
@@ -268,6 +333,33 @@ func getList(db *sql.DB, key string) ([]string, error) {
 	defer stmt.Close()
 
 	rows, err := stmt.Query(encrypt([]byte(key)))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var values = make([]string, 0)
+
+	for rows.Next() {
+		var value string
+		err = rows.Scan(&value)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, value)
+	}
+
+	return values, nil
+}
+
+func getDescendantPath(db *sql.DB, key string) ([]string, error) {
+	stmt, err := db.Prepare("SELECT list_key FROM key_list WHERE list_key LIKE ?")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(fmt.Sprintf("%s%%", key))
 	if err != nil {
 		return nil, err
 	}

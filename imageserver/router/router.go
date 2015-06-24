@@ -20,12 +20,17 @@ import (
 )
 
 const (
+	headerSourcePath  = "Source-Path"
+	headerDestPath = "Dest-Path"
 	headerPath        = "Path"
 	headerIndex       = "Fragment-Index"
 	headerRange       = "Bytes-Range"
 	headerIsLast      = "Is-Last"
+	headerVersion     = "Registry-Version"
 	LimitCSNormalSize = 2
 	SUCCESS           = ""
+	VERSION1		  = "v1"
+	VERSION2		  = "v2"
 )
 
 type Server struct {
@@ -74,10 +79,12 @@ func (s *Server) initApi() {
 			"/v1/fileinfo":       s.getFileInfo,
 			"/v1/file":           s.downloadFile,
 			"/v1/list_directory": s.getDirectoryInfo,
+			"/v1/list_descendant": s.getDescendant,
 		},
 		"POST": {
 			"/v1/file":  s.uploadFile,
 			"/v1/_ping": s.ping,
+			"/v1/move":  s.moveFile,
 		},
 		"DELETE": {
 			"/v1/file": s.deleteFile,
@@ -105,18 +112,18 @@ func (s *Server) responseResult(data []byte, statusCode int, err error, w http.R
 	w.Write(data)
 }
 
-func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
-	header := r.Header
+
+func (s *Server) uploadFileReadParam(header *http.Header) (*meta.MetaInfo, string, error) {
 	path := header.Get(headerPath)
 	fragmentIndex := header.Get(headerIndex)
 	bytesRange := header.Get(headerRange)
 	isLast := header.Get(headerIsLast)
+	version := header.Get(headerVersion)
 
 	start, end, err := s.splitRange(bytesRange)
 	if err != nil {
 		log.Errorf("splitRange error: %s", err)
-		s.responseResult(nil, http.StatusBadRequest, err, w)
-		return
+		return nil, version, err
 	}
 
 	last := false
@@ -127,11 +134,10 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 	index, err := strconv.ParseUint(fragmentIndex, 10, 64)
 	if err != nil {
 		log.Errorf("parse fragmentIndex error: %s", err)
-		s.responseResult(nil, http.StatusBadRequest, err, w)
-		return
+		return nil, version, err
 	}
 
-	log.Infof("[postFile] path: %s, fragmentIndex: %d, bytesRange: %d-%d, isLast: %v", path, index, start, end, last)
+	log.Infof("[uploadFileReadParam] path: %s, fragmentIndex: %d, bytesRange: %d-%d, isLast: %v", path, index, start, end, last)
 
 	metaInfoValue := &meta.MetaInfoValue{
 		Index:  index,
@@ -140,48 +146,32 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 		IsLast: last,
 	}
 	metaInfo := &meta.MetaInfo{Path: path, Value: metaInfoValue}
+	return metaInfo, version, nil
+}
 
-	//upload concurrently, select a group
-	//chunkServers, err := s.getChunkServerGroup(int64(end-start), metaInfoValue)
-	chunkServers, err := s.selectChunkServerGroupComplex(int64(end-start), metaInfoValue)
+func (s *Server) upload(data []byte, metaInfo *meta.MetaInfo) (int, error) {
+	chunkServers, err := s.selectChunkServerGroupComplex(int64(metaInfo.Value.End-metaInfo.Value.Start))
 	if err != nil {
-		log.Errorf("select ChunkServerGroup error: %s", err)
-		s.responseResult(nil, http.StatusInternalServerError, err, w)
-		return
-	}
-
-	//TODO need check, num of chunkserver >= 2
-	if len(chunkServers) == 0 {
-		log.Errorf("select ChunkServerGroup error, len(chunkServers) == 0")
-		s.responseResult(nil, http.StatusInternalServerError, fmt.Errorf("select ChunkServerGroup error"), w)
-		return
+		log.Errorf("[upload] select ChunkServerGroup error: %s", err)
+		return http.StatusInternalServerError, err
 	}
 
 	log.Debugf("ChunkServerGroup: %s", chunkServers)
 
 	fileId, err := s.getFid()
 	if err != nil {
-		log.Errorf("get fileId error: %s", err)
-		s.responseResult(nil, http.StatusInternalServerError, err, w)
-		return
-	}
-
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Errorf("read request body error: %s", err)
-		s.responseResult(nil, http.StatusInternalServerError, err, w)
-		return
+		log.Errorf("[upload] get fileId error: %s", err)
+		return http.StatusInternalServerError, err
 	}
 
 	var rangeSize uint64
-	rangeSize = end - start
+	rangeSize = metaInfo.Value.End - metaInfo.Value.Start
 	if len(data) != int(rangeSize) {
 		log.Errorf("the data length is: %d, rangeSize is: %d", len(data), rangeSize)
-		s.responseResult(nil, http.StatusBadRequest, fmt.Errorf("length of data and range are different"), w)
-		return
+		return http.StatusBadRequest, fmt.Errorf("length of data: %d != range: %d", len(data), rangeSize)
 	}
 
-	log.Debugf("begin to post concurrently")
+	log.Debugf("begin to upload concurrently")
 
 	var normal int = 0
 	for i := 0; i < len(chunkServers); i++ {
@@ -197,28 +187,61 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Debugf("handle post result, num: %d", normal)
+	log.Debugf("upload result, num: %d", normal)
 	err = s.handlePostResult(ch, normal)
 	if err != nil {
-		log.Errorf("post error: %s", err)
-		s.responseResult(nil, http.StatusInternalServerError, err, w)
-		return
+		log.Errorf("upload error: %s", err)
+		return http.StatusInternalServerError, err
 	}
 
-	log.Debugf("post end")
-	log.Debugf("begin to store metaInfo: %s", metaInfo)
-
+	log.Debugf("upload end")
 	metaInfo.Value.FileId = fileId
 	metaInfo.Value.GroupId = uint16(chunkServers[0].GroupId)
 
-	err = s.metaDriver.StoreMetaInfo(metaInfo)
+	return http.StatusOK, nil
+}
+
+//store metainfo function is special for docker registry v1
+func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
+	metaInfo, version, err := s.uploadFileReadParam(&r.Header)
+	if err != nil {
+		log.Errorf("[uploadFile] read param error: %v", err)
+		s.responseResult(nil, http.StatusBadRequest, err, w)
+		return
+	}
+
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("read request body error: %s", err)
+		s.responseResult(nil, http.StatusBadRequest, err, w)
+		return
+	}
+
+	statusCode, err := s.upload(data, metaInfo)
+	if err != nil {
+		log.Errorf("[uploadFile] upload error: %v", err)
+		s.responseResult(nil, statusCode, err, w)
+		return
+	}
+
+	if version == VERSION1 {
+		log.Debugf("==== registry v1 =====")
+		err = s.metaDriver.StoreMetaInfoV1(metaInfo)
+	} else {
+		log.Debugf("==== registry v2 =====")
+		err = s.metaDriver.StoreMetaInfoV2(metaInfo)
+	}
+
+//	log.Debugf("registry version: %v", version)
+//	err = s.metaDriver.StoreMetaInfo(metaInfo)
+
 	if err != nil {
 		log.Errorf("store metaInfo error: %s", err)
 		s.responseResult(nil, http.StatusInternalServerError, err, w)
 		return
 	}
 
-	log.Infof("[postFile] success. path: %s, fragmentIndex: %d, bytesRange: %d-%d, isLast: %v", path, index, start, end, last)
+	log.Infof("[postFile] success. path: %s, fragmentIndex: %d, bytesRange: %d-%d, isLast: %v", metaInfo.Path, metaInfo.Value.Index, metaInfo.Value.Start, metaInfo.Value.End, metaInfo.Value.IsLast)
 
 	s.responseResult(nil, http.StatusOK, nil, w)
 }
@@ -255,6 +278,20 @@ func (s *Server) getFileInfo(w http.ResponseWriter, r *http.Request) {
 	s.responseResult(jsonResult, http.StatusOK, nil, w)
 }
 
+func (s *Server) moveFile(w http.ResponseWriter, r *http.Request) {
+	header := r.Header 
+	sourcePath := header.Get(headerSourcePath)
+	destPath := header.Get(headerDestPath)
+	err := s.metaDriver.MoveFile(sourcePath, destPath)
+	if err != nil {
+		log.Errorf("[moveFile] sourePath: %s, destPath: %s, error: %s", sourcePath, destPath, err)
+		s.responseResult(nil, http.StatusInternalServerError, err, w)
+	}
+	log.Infof("[moveFile] success, sourcePaht: %s, destPath: %s", sourcePath, destPath)
+	s.responseResult(nil, http.StatusOK, nil, w)
+}
+
+
 func (s *Server) getDirectoryInfo(w http.ResponseWriter, r *http.Request) {
 	path := r.Header.Get(headerPath)
 
@@ -283,6 +320,36 @@ func (s *Server) getDirectoryInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Infof("[getDirectoryInfo] success, directory: %s, result: %s", path, string(jsonResult))
+	s.responseResult(jsonResult, http.StatusOK, nil, w)
+}
+
+func (s *Server) getDescendant(w http.ResponseWriter, r *http.Request) {
+	path := r.Header.Get(headerPath)
+	log.Infof("[getDescendant] path: %s", path)
+
+	result, err := s.metaDriver.GetDescendantPath(path)
+	if err != nil {
+		log.Errorf("getDescendant path: %s, error: %s", path, err)
+		s.responseResult(nil, http.StatusInternalServerError, err, w)
+		return
+	}
+
+	if len(result) == 0 {
+		log.Infof("getDescendant result ie empty, path: %s", path)
+		s.responseResult(nil, http.StatusNotFound, err, w)
+		return
+	}
+
+	resultMap := make(map[string]interface{})
+	resultMap["path-descendant"] = result
+	jsonResult, err := json.Marshal(resultMap)
+	if err != nil {
+		log.Errorf("json.Marshal error, result: %s", jsonResult)
+		s.responseResult(nil, http.StatusInternalServerError, err, w)
+		return
+	}
+
+	log.Infof("[getDescendant] success, path: %s, result: %s", path, string(jsonResult))
 	s.responseResult(jsonResult, http.StatusOK, nil, w)
 }
 
@@ -366,10 +433,17 @@ func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) deleteFile(w http.ResponseWriter, r *http.Request) {
 	path := r.Header.Get(headerPath)
+	version := r.Header.Get(headerVersion)
 
 	log.Infof("[deleteFile] path: %s", path)
 
-	err := s.metaDriver.DeleteFileMetaInfo(path)
+	var err error
+	if version == VERSION1 {
+		err = s.metaDriver.DeleteFileMetaInfoV1(path)
+	} else {
+		err = s.metaDriver.DeleteFileMetaInfoV2(path)
+	}
+
 	if err != nil {
 		log.Errorf("delete metainfo error for path: %s, error: %s", path, err)
 		s.responseResult(nil, http.StatusInternalServerError, err, w)
@@ -573,7 +647,8 @@ func (s *Server) selectChunkServerGroupSimple(size int64, meta *meta.MetaInfoVal
 	return nil, fmt.Errorf("can not find an available chunkserver")
 }
 
-func (s *Server) selectChunkServerGroupComplex(size int64, meta *meta.MetaInfoValue) ([]chunkserver.ChunkServer, error) {
+//func (s *Server) selectChunkServerGroupComplex(size int64, meta *meta.MetaInfoValue) ([]chunkserver.ChunkServer, error) {
+func (s *Server) selectChunkServerGroupComplex(size int64) ([]chunkserver.ChunkServer, error) {
 	if size <= 0 {
 		log.Errorf("data size: %d <= 0")
 		return nil, fmt.Errorf("data size: %d <= 0", size)
