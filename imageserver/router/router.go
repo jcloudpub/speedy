@@ -21,7 +21,7 @@ import (
 
 const (
 	headerSourcePath  = "Source-Path"
-	headerDestPath = "Dest-Path"
+	headerDestPath    = "Dest-Path"
 	headerPath        = "Path"
 	headerIndex       = "Fragment-Index"
 	headerRange       = "Bytes-Range"
@@ -29,8 +29,8 @@ const (
 	headerVersion     = "Registry-Version"
 	LimitCSNormalSize = 2
 	SUCCESS           = ""
-	VERSION1		  = "v1"
-	VERSION2		  = "v2"
+	VERSION1          = "v1"
+	VERSION2          = "v2"
 )
 
 type Server struct {
@@ -76,9 +76,9 @@ func NewServer(masterUrl, ip string, port int, num int, metadbIp string, metadbP
 func (s *Server) initApi() {
 	m := map[string]map[string]http.HandlerFunc{
 		"GET": {
-			"/v1/fileinfo":       s.getFileInfo,
-			"/v1/file":           s.downloadFile,
-			"/v1/list_directory": s.getDirectoryInfo,
+			"/v1/fileinfo":        s.getFileInfo,
+			"/v1/file":            s.downloadFile,
+			"/v1/list_directory":  s.getDirectoryInfo,
 			"/v1/list_descendant": s.getDescendant,
 		},
 		"POST": {
@@ -111,7 +111,6 @@ func (s *Server) responseResult(data []byte, statusCode int, err error, w http.R
 	log.Debugf("responseResult len: %d", len(string(data)))
 	w.Write(data)
 }
-
 
 func (s *Server) uploadFileReadParam(header *http.Header) (*meta.MetaInfo, string, error) {
 	path := header.Get(headerPath)
@@ -150,7 +149,7 @@ func (s *Server) uploadFileReadParam(header *http.Header) (*meta.MetaInfo, strin
 }
 
 func (s *Server) upload(data []byte, metaInfo *meta.MetaInfo) (int, error) {
-	chunkServers, err := s.selectChunkServerGroupComplex(int64(metaInfo.Value.End-metaInfo.Value.Start))
+	chunkServers, err := s.selectChunkServerGroupComplex(int64(metaInfo.Value.End - metaInfo.Value.Start))
 	if err != nil {
 		log.Errorf("[upload] select ChunkServerGroup error: %s", err)
 		return http.StatusInternalServerError, err
@@ -232,8 +231,8 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 		err = s.metaDriver.StoreMetaInfoV2(metaInfo)
 	}
 
-//	log.Debugf("registry version: %v", version)
-//	err = s.metaDriver.StoreMetaInfo(metaInfo)
+	//	log.Debugf("registry version: %v", version)
+	//	err = s.metaDriver.StoreMetaInfo(metaInfo)
 
 	if err != nil {
 		log.Errorf("store metaInfo error: %s", err)
@@ -279,7 +278,7 @@ func (s *Server) getFileInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) moveFile(w http.ResponseWriter, r *http.Request) {
-	header := r.Header 
+	header := r.Header
 	sourcePath := header.Get(headerSourcePath)
 	destPath := header.Get(headerDestPath)
 	err := s.metaDriver.MoveFile(sourcePath, destPath)
@@ -290,7 +289,6 @@ func (s *Server) moveFile(w http.ResponseWriter, r *http.Request) {
 	log.Infof("[moveFile] success, sourcePaht: %s, destPath: %s", sourcePath, destPath)
 	s.responseResult(nil, http.StatusOK, nil, w)
 }
-
 
 func (s *Server) getDirectoryInfo(w http.ResponseWriter, r *http.Request) {
 	path := r.Header.Get(headerPath)
