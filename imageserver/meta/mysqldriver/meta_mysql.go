@@ -162,7 +162,7 @@ func (db *MysqlDriver) MoveFile(sourcePath, destPath string) error {
 func (db *MysqlDriver) GetDirectoryInfo(path string) ([]string, error) {
 	interDirectory := DIRECTORY + path
 
-	files, err := getList(mysqlDB, interDirectory)
+	files, _, err := getList(mysqlDB, interDirectory)
 	if err != nil {
 		return nil, err
 	}
@@ -189,14 +189,14 @@ func (db *MysqlDriver) GetDescendantPath(path string) ([]string, error) {
 
 //[(Index0, Start0, End0, IsLast0), (Index1, Start1, End1, IsLast1)]
 func (db *MysqlDriver) GetFileMetaInfo(path string, detail bool) ([]*MetaInfoValue, error) {
-	list, err := getList(mysqlDB, path)
+	list, timeArr, err := getList(mysqlDB, path)
 	if err != nil {
 		return nil, err
 	}
 
 	metaInfoValues := make([]*MetaInfoValue, 0)
 
-	for _, bts := range list {
+	for i, bts := range list {
 		var jsonMap map[string]interface{}
 		err := json.Unmarshal([]byte(bts), &jsonMap)
 		if err != nil {
@@ -208,6 +208,7 @@ func (db *MysqlDriver) GetFileMetaInfo(path string, detail bool) ([]*MetaInfoVal
 		metaInfoValue.Start = uint64(jsonMap["Start"].(float64))
 		metaInfoValue.End = uint64(jsonMap["End"].(float64))
 		metaInfoValue.IsLast = jsonMap["IsLast"].(bool)
+		metaInfoValue.ModTime = timeArr[i]
 
 		if detail {
 			metaInfoValue.FileId = uint64(jsonMap["FileId"].(float64))
@@ -242,7 +243,7 @@ func (db *MysqlDriver) GetFragmentMetaInfo(path string, index, start, end uint64
 }
 
 func newMySqlConn(ip string, port int, user string, passwd string, database string) (*sql.DB, error) {
-	args := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8", user, passwd, ip, port, database)
+	args := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=true", user, passwd, ip, port, database)
 	db, err := sql.Open("mysql", args)
 	if err != nil {
 		return nil, err
@@ -325,31 +326,34 @@ func delListOne(db *sql.DB, key, value string) error {
 	return nil
 }
 
-func getList(db *sql.DB, key string) ([]string, error) {
-	stmt, err := db.Prepare("SELECT list_value FROM key_list WHERE md5_key = ? ORDER BY create_time DESC")
+func getList(db *sql.DB, key string) ([]string, []time.Time, error) {
+	stmt, err := db.Prepare("SELECT list_value, update_time FROM key_list WHERE md5_key = ? ORDER BY create_time DESC")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query(encrypt([]byte(key)))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 
 	var values = make([]string, 0)
+	var timeArr = make([]time.Time, 0)
 
 	for rows.Next() {
 		var value string
-		err = rows.Scan(&value)
+		var timeValue time.Time
+		err = rows.Scan(&value, &timeValue)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		values = append(values, value)
+		timeArr = append(timeArr, timeValue)
 	}
 
-	return values, nil
+	return values, timeArr, nil
 }
 
 func getDescendantPath(db *sql.DB, key string) ([]string, error) {

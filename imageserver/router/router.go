@@ -224,15 +224,10 @@ func (s *Server) uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if version == VERSION1 {
-		log.Debugf("==== registry v1 =====")
 		err = s.metaDriver.StoreMetaInfoV1(metaInfo)
 	} else {
-		log.Debugf("==== registry v2 =====")
 		err = s.metaDriver.StoreMetaInfoV2(metaInfo)
 	}
-
-	//	log.Debugf("registry version: %v", version)
-	//	err = s.metaDriver.StoreMetaInfo(metaInfo)
 
 	if err != nil {
 		log.Errorf("store metaInfo error: %s", err)

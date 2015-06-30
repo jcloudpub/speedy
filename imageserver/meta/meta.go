@@ -1,5 +1,9 @@
 package meta
 
+import (
+	"time"
+)
+
 const (
 	TAG       = "tag_"
 	SPLIT     = "/"
@@ -16,6 +20,7 @@ type MetaInfoValue struct {
 	GroupId uint16 `json:",omitempty"`
 	FileId  uint64 `json:",omitempty"`
 	IsLast  bool
+	ModTime time.Time `json:",omitempty`
 }
 
 type MetaInfo struct {
