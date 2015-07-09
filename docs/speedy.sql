@@ -74,6 +74,7 @@ CREATE TABLE `key_list` (
   `md5_key` char(32) DEFAULT NULL,
   `list_value` varchar(255) DEFAULT NULL,
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `md5_key` (`md5_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
