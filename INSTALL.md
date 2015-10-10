@@ -89,6 +89,10 @@ example:
 
      `mkdir ~/registry`
 
+     `cd src/github.com/jcloudpub/speedy`
+
+     `cp -r docker_registry_speedy_driver ~/registry`
+
      `tar -xzvf ./docker_registry/docker-registry-core-2.0.3.tar.gz ~/registry`
      
      `cd ~/registry/docker-registry-core-2.0.3`
@@ -103,10 +107,12 @@ example:
 
 3. install speedy_docker_registry_driver
 
-     `cd docker_registry_speedy_driver`
+     `cd ~/registry/docker_registry_speedy_driver`
      `python setup.py install`
 
 4. modify registry setting
+
+     `cd ~/registry/docker_registry_speedy_driver`
 
      `cp config_sample.yml  config.yml`
      
