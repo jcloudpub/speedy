@@ -54,11 +54,11 @@ if you want to add two groups, the example of two groups's json:
 
 start chunkserver process group according above setting
 
-     `./bin/spy_server --ip=127.0.0.1 --port=7654 --data_dir=~/spy_data --error_log=./err.log --group_id=1 --master_port=<chunkmaster listen port> --master_ip=<chunkmaster listen addr>`
+     `./bin/spy_server --ip=127.0.0.1 --port=7654 --data_dir=./spy_data-7654 --error_log=./err-7654.log --group_id=1 --chunks=10 --master_port=<chunkmaster listen port> --master_ip=<chunkmaster listen addr>`
 
-     `./bin/spy_server --ip=127.0.0.1 --port=7655 --data_dir=~/spy_data --error_log=./err.log --group_id=1 --master_port=<chunkmaster listen port> --master_ip=<chunkmaster listen addr>`
+     `./bin/spy_server --ip=127.0.0.1 --port=7655 --data_dir=./spy_data-7655 --error_log=./err-7654.log --group_id=1 --chunks=10 --master_port=<chunkmaster listen port> --master_ip=<chunkmaster listen addr>`
 
-     `./bin/spy_server --ip=127.0.0.1 --port=7656 --data_dir=~/spy_data --error_log=./err.log --group_id=1 --master_port=<chunkmaster listen port> --master_ip=<chunkmaster listen addr>`
+     `./bin/spy_server --ip=127.0.0.1 --port=7656 --data_dir=./spy_data-7656 --error_log=./err-7654.log --group_id=1 --chunks=10 --master_port=<chunkmaster listen port> --master_ip=<chunkmaster listen addr>`
 
 ### install imageserver
 start imageserver process
